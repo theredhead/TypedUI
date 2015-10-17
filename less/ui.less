@@ -1,0 +1,86 @@
+@window-top-radius: 6px;
+@window-background: rgb(246,246,246);
+
+@close-button-color: red;
+@minimize-button-color: orange;
+@resize-button-color: green;
+
+div {
+	box-sizing: border-box;
+}
+.ui {
+	// cursor: default;
+}
+.Window {
+	border-top-left-radius: @window-top-radius;
+	border-top-right-radius: @window-top-radius;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, .88);
+
+	&:last-child {
+    	box-shadow: 0 8px 32px rgba(0, 0, 0, .66);
+	}
+	
+	background: darken(@window-background, 10%);
+	.TitleBar {
+        // border: solid 1px darken(@window-background, 50%);
+		border-top-left-radius: @window-top-radius/3 * 2;
+		border-top-right-radius: @window-top-radius/3 * 2;
+        background: darken(@window-background, 20%);
+		
+		.WindowTools {
+			.WindowTool {
+				border-radius: 50%;
+				.Icon {
+					visibility: hidden;
+				}
+				&:hover {
+					.Icon {
+						visibility: visible;
+					}
+				}
+				&.Close {
+					background: fadeout(@close-button-color, 50%);
+					border: soliz 1px @close-button-color;
+					box-shadow: 0 1px 3px fadeout(@close-button-color, 10%); 
+					&:hover {
+						background: @close-button-color;
+					} 
+				}
+				&.Minimize {
+					background: fadeout(@minimize-button-color, 50%);
+					border: soliz 1px @minimize-button-color;
+					box-shadow: 0 1px 3px fadeout(@minimize-button-color, 10%); 
+					&:hover {
+						background: @minimize-button-color;
+					} 
+				}
+				&.Resize {
+					background: fadeout(@resize-button-color, 50%);
+					border: soliz 1px @resize-button-color;
+					box-shadow: 0 1px 3px fadeout(@resize-button-color, 10%);
+					&:hover {
+						background: @resize-button-color;
+					} 
+				}
+				box-shadow: inset 0 1 3px white; 
+			}
+			&:hover {
+				.WindowTool {
+					&.Close {
+						background: fadeout(@close-button-color, 15%);
+					}
+					&.Minimize {
+						background: fadeout(@minimize-button-color, 15%);
+					}
+					&.Resize {
+						background: fadeout(@resize-button-color, 15%);
+					}
+				}
+			}
+		}
+	}
+	.ContentView {
+        // border: solid 1px darken(@window-background, 50%);
+		background: @window-background;
+	}
+}

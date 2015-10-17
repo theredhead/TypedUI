@@ -1,0 +1,44 @@
+
+<module name="red" prefix="KH">
+    <class name="Point">
+        <property name="x" type="number" />
+        <property name="y" type="number" />
+        <toString>({x}, {y})</toString>
+    </class>
+    <class name="Size">
+        <property name="width" type="number" />
+        <property name="height" type="number" />
+        <toString>({width}, {height})</toString>
+    </class>
+    <class name="Rect">
+        <property name="origin" type="Point" />
+        <property name="size" type="Size" />
+        <toString>(origin:{origin}, size:{size})</toString>
+    </class>
+    <class name="Color">
+        <property name="redComponent" type="number" />
+        <property name="greenComponent" type="numeber" />
+        <property name="blueComponent" type="numeber" />
+        <property name="alphaComponent" type="numeber" />
+        <toString>rgb({redComponent}, {greenComponent}, {blueComponent}, {alphaComponent})</toString>
+    </class>
+    <class name="UIElement">
+        <property name="frame" type="Rect" />
+        <property name="tagName" type="string" />
+        <property name="clipsContent" type="boolean" />
+        <property name="element" type="HTMLElement" />
+        <property name="cssClasses" type="Array<string>" />
+    </class>
+    <class name="View" extends="UIElement">
+        <property name="identifier" type="string" />
+        <property name="frame" type="Rect" />
+        <property name="element" type="HTMLElement" />
+        <property name="foregroundColor" type="Color" />
+        <property name="backgroundColor" type="Color" />
+        <property name="subViews" type="Array<View>" />
+        <property name="autoresizeingMask" type="number" />
+        <property name="autoresizesSubviews" type="boolean" />
+        <property name="needsLayout" type="boolean" />
+        <property name="needsDraw" type="boolean" />
+    </class>
+</module>
