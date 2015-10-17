@@ -1,10 +1,19 @@
 div {
   box-sizing: border-box;
 }
+.ui {
+  cursor: default;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 .Window {
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.88);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
   background: #dddddd;
 }
 .Window:last-child {
@@ -26,28 +35,28 @@ div {
   visibility: visible;
 }
 .Window .TitleBar .WindowTools .WindowTool.Close {
-  background: rgba(255, 0, 0, 0.5);
-  border: soliz 1px #ff0000;
-  box-shadow: 0 1px 3px rgba(255, 0, 0, 0.9);
+  background: rgba(255, 0, 0, 0.2);
 }
 .Window .TitleBar .WindowTools .WindowTool.Close:hover {
   background: #ff0000;
+  border: soliz 1px #ff0000;
+  box-shadow: 0 1px 3px rgba(255, 0, 0, 0.2);
 }
 .Window .TitleBar .WindowTools .WindowTool.Minimize {
-  background: rgba(255, 165, 0, 0.5);
-  border: soliz 1px #ffa500;
-  box-shadow: 0 1px 3px rgba(255, 165, 0, 0.9);
+  background: rgba(255, 165, 0, 0.2);
 }
 .Window .TitleBar .WindowTools .WindowTool.Minimize:hover {
   background: #ffa500;
+  border: soliz 1px #ffa500;
+  box-shadow: 0 1px 3px rgba(255, 165, 0, 0.2);
 }
 .Window .TitleBar .WindowTools .WindowTool.Resize {
-  background: rgba(0, 128, 0, 0.5);
-  border: soliz 1px #008000;
-  box-shadow: 0 1px 3px rgba(0, 128, 0, 0.9);
+  background: rgba(0, 128, 0, 0.2);
 }
 .Window .TitleBar .WindowTools .WindowTool.Resize:hover {
   background: #008000;
+  border: soliz 1px #008000;
+  box-shadow: 0 1px 3px rgba(0, 128, 0, 0.2);
 }
 .Window .TitleBar .WindowTools:hover .WindowTool.Close {
   background: rgba(255, 0, 0, 0.85);

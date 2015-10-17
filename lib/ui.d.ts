@@ -57,9 +57,11 @@ declare module red {
     function RectMakeZero(): Rect;
     class UIElement {
         private _cursor;
+        private _color;
         private _backgroundColor;
         private _backgroundImage;
         public setCursor(crsr: string): void;
+        public setColor(color: Color): void;
         public setBackgroundColor(color: Color): void;
         public setBackgroundImage(anImageUrl: string): void;
         private _clipsContent;
@@ -168,10 +170,14 @@ declare module red {
         constructor(rect: Rect);
     }
     class UserResizableView extends View {
-        private minimumSize;
-        private maximumSize;
-        private isHorizontallySizable;
-        private isVertictallySizable;
+        private _minimumSize;
+        public minimumSize : Rect;
+        private _maximumSize;
+        public maximumSize : Rect;
+        private _isHorizontallySizable;
+        public isHorizontallySizable : boolean;
+        private _isVertictallySizable;
+        public isVertictallySizable : boolean;
         private _resizeBorderThickness;
         public resizeBorderThickness : number;
         private _sizeHandleHorizontallyLeft;
@@ -185,7 +191,14 @@ declare module red {
         constructor(aRect: Rect);
         public applyFrame(): void;
     }
-    class Window extends UserResizableView {
+    class UserDraggableView extends UserResizableView {
+        private _isDraggable;
+        public isDraggable : boolean;
+        private _dragHandleView;
+        public dragHandleView : View;
+        constructor(aRect: Rect);
+    }
+    class Window extends UserDraggableView {
         private _titleBar;
         private _contentView;
         private _windowManager;

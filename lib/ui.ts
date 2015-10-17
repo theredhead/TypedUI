@@ -278,7 +278,7 @@ module red {
 			var availableHeight = this.size.height,
 				singleRectHeight = (availableHeight - ((1 + rects.length) * margin)) / rects.length,
 				singleRectWidth = this.size.width - (2 * margin);
-				
+
 			for (var ix = 0; ix < rects.length; ix++) {
 				rects[ix].origin.x = margin;
 				rects[ix].origin.y = ((ix + 1) * margin) + (ix * singleRectHeight);
@@ -306,12 +306,18 @@ module red {
 	}
 
 	export class UIElement {
-		private _cursor:string;
-		private _backgroundColor:Color;
-		private _backgroundImage:string;
+		private _cursor: string;
+		private _color: Color;
+		private _backgroundColor: Color;
+		private _backgroundImage: string;
 
 		public setCursor(crsr: string): void {
 			this._cursor = crsr;
+			this.applyFrame();
+		}
+
+		public setColor(color: Color) {
+			this._color = color;
 			this.applyFrame();
 		}
 
@@ -333,22 +339,22 @@ module red {
 			this._clipsContent = v;
 		}
 
-		private _frame : Rect;
-		public get frame() : Rect {
+		private _frame: Rect;
+		public get frame(): Rect {
 			return this._frame;
 		}
-		public set frame(v : Rect) {
+		public set frame(v: Rect) {
 			this._frame = v;
 		}
 
-		private _tag : string;
-		public get tag() : string {
+		private _tag: string;
+		public get tag(): string {
 			return this._tag;
 		}
-		public set tag(v : string) {
+		public set tag(v: string) {
 			this._tag = v;
 		}
-		
+
 		private _element: HTMLElement;
 		public get element(): HTMLElement {
 			return this._element;
@@ -382,8 +388,8 @@ module red {
 				this._element.style.clip = this.frame.toClipString();
 			else
 				this._element.style.clip = null;
-			
-			if (this._cursor)				
+
+			if (this._cursor)
 				this.element.style.cursor = this._cursor;
 			if (this._backgroundColor)
 				this.element.style.backgroundColor = this._backgroundColor.toString();
@@ -480,25 +486,25 @@ module red {
 		public set parentView(aView: View) {
 			this._parentView = aView;
 		}
-		
-		
-		private _autoresizingMask : boolean;
-		public get autoresizingMask() : boolean {
+
+
+		private _autoresizingMask: boolean;
+		public get autoresizingMask(): boolean {
 			return this._autoresizingMask;
 		}
-		public set autoresizingMask(v : boolean) {
+		public set autoresizingMask(v: boolean) {
 			this._autoresizingMask = v;
 		}
-		
-		
-		private _autoresizesChildViews : string;
-		public get autoresizesChildViews() : string {
+
+
+		private _autoresizesChildViews: string;
+		public get autoresizesChildViews(): string {
 			return this._autoresizesChildViews;
 		}
-		public set autoresizesChildViews(v : string) {
+		public set autoresizesChildViews(v: string) {
 			this._autoresizesChildViews = v;
 		}
-		
+
 		private _adjustToParentRect(rect: Rect): void {
 
 		}
@@ -512,22 +518,22 @@ module red {
 				}
 			}
 		}
-		public applyFrame() : void {
+		public applyFrame(): void {
 			super.applyFrame();
 			for (var ix = 0; ix < this._subViews.length; ix++) {
 				this._subViews[ix].applyFrame();
 			}
 		}
 
-		
-		private _isResizing : boolean;
-		public get isResizing() : boolean {
+
+		private _isResizing: boolean;
+		public get isResizing(): boolean {
 			return this._isResizing;
 		}
-		public set isResizing(v : boolean) {
+		public set isResizing(v: boolean) {
 			this._isResizing = v;
 		}
-		
+
 
 		private _isBeingDragged: boolean;
 		public get isBeingDragged(): boolean {
@@ -537,12 +543,12 @@ module red {
 			this._isBeingDragged = v;
 		}
 
-		
-		private _allowDragAndDrop : boolean;
-		public get allowDragAndDrop() : boolean {
+
+		private _allowDragAndDrop: boolean;
+		public get allowDragAndDrop(): boolean {
 			return this._allowDragAndDrop;
 		}
-		public set allowDragAndDrop(v : boolean) {
+		public set allowDragAndDrop(v: boolean) {
 			this._allowDragAndDrop = v;
 		}
 
@@ -640,11 +646,11 @@ module red {
 		private originalFrame: Rect;
 		private resizeDirectionMask: number;
 		private busy: boolean;
-		private initialMouseEvent:MouseEvent;
+		private initialMouseEvent: MouseEvent;
 		private mouseMoveHandler: any;
 		private mouseUpHandler: any;
 
-		private constrain(val:number, min:number, max:number) : number {
+		private constrain(val: number, min: number, max: number): number {
 			if (val < min || val)
 				return min;
 			if (val > max || val)
@@ -668,7 +674,6 @@ module red {
 				frame.origin.x = Math.round(this.originalFrame.origin.x - diffX);
 				frame.size.width = Math.round(this.originalFrame.size.width + diffX);
 			}
-
 			if ((dir & Resize.South) == Resize.South) {
 				frame.size.height = Math.round(this.originalFrame.size.height - diffY);
 			}
@@ -687,6 +692,7 @@ module red {
 			document.removeEventListener('mouseup', this.mouseUpHandler, true);
 			this.view.isResizing = false;
 			this.view.isBeingDragged = false;
+			this.view.applyFrame();
 		}
 
 		constructor(e: MouseEvent, view: View, directionMask: number) {
@@ -773,22 +779,53 @@ module red {
 	export class WindowSizeHandle extends View {
 		constructor(rect: Rect) {
 			super(rect);
-			this.setBackgroundColor(colors.red);
+			// this.setBackgroundColor(colors.red);
 		}
 	}
 
 	export class UserResizableView extends View {
-		
-		private minimumSize:Rect;
-		private maximumSize:Rect;
-		
-		private isHorizontallySizable:boolean = true;
-		private isVertictallySizable:boolean = true;
-		
-		private _resizeBorderThickness:number;
-		public get resizeBorderThickness() {
-			return this._resizeBorderThickness;
+
+		private _minimumSize: Rect;
+		public set minimumSize(rect: Rect) {
+			this._minimumSize = rect;
 		}
+		public get minimumSize(): Rect {
+			return this._minimumSize;
+		}
+
+		private _maximumSize: Rect;
+		public get maximumSize(): Rect {
+			return this._maximumSize;
+		}
+		public set maximumSize(v: Rect) {
+			this._maximumSize = v;
+		}
+
+		private _isHorizontallySizable: boolean;
+		public get isHorizontallySizable(): boolean {
+			return this._isHorizontallySizable;
+		}
+		public set isHorizontallySizable(v: boolean) {
+			this._isHorizontallySizable = v;
+		}
+
+		private _isVertictallySizable: boolean;
+		public get isVertictallySizable(): boolean {
+			return this._isVertictallySizable;
+		}
+		public set isVertictallySizable(v: boolean) {
+			this._isVertictallySizable = v;
+		}
+
+
+		private _resizeBorderThickness: number;
+		public get resizeBorderThickness(): number {
+			return Math.round(this._resizeBorderThickness);
+		}
+		public set resizeBorderThickness(v: number) {
+			this._resizeBorderThickness = v;
+		}
+
 		private _sizeHandleHorizontallyLeft: WindowSizeHandle;
 		private _sizeHandleHorizontallyRight: WindowSizeHandle;
 		private _sizeHandleVerticallyTop: WindowSizeHandle;
@@ -797,8 +834,8 @@ module red {
 		private _sizeHandleTopRight: WindowSizeHandle;
 		private _sizeHandleBottomLeft: WindowSizeHandle;
 		private _sizeHandleBottomRight: WindowSizeHandle;
-		
-		constructor(aRect:Rect) {
+
+		constructor(aRect: Rect) {
 			super(aRect);
 			this._resizeBorderThickness = 4;
 			var thickness = this._resizeBorderThickness;
@@ -838,27 +875,54 @@ module red {
 			
 			var theView = this;
 			this._sizeHandleHorizontallyRight.mouseDown = (e: MouseEvent) => {
-				if (! theView.isResizing && theView.isHorizontallySizable) {
+				if (!theView.isResizing && theView.isHorizontallySizable) {
 					new ViewResizeManager(e, theView, Resize.East);
 				}
 			};
 			this._sizeHandleHorizontallyLeft.mouseDown = (e: MouseEvent) => {
-				if (! theView.isResizing && theView.isHorizontallySizable) {
+				if (!theView.isResizing && theView.isHorizontallySizable) {
 					new ViewResizeManager(e, theView, Resize.West);
 				}
 			};
 			this._sizeHandleVerticallyTop.mouseDown = (e: MouseEvent) => {
-				if (! theView.isResizing && theView.isVertictallySizable) {
+				if (!theView.isResizing && theView.isVertictallySizable) {
 					new ViewResizeManager(e, theView, Resize.North);
 				}
 			};
 			this._sizeHandleVerticallyallyBottom.mouseDown = (e: MouseEvent) => {
-				if (! theView.isResizing && theView.isVertictallySizable) {
+				if (!theView.isResizing && theView.isVertictallySizable) {
 					new ViewResizeManager(e, theView, Resize.South);
 				}
 			};
+			
+			this._sizeHandleTopLeft.mouseDown = (e: MouseEvent) => {
+				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+					new ViewResizeManager(e, theView, Resize.North | Resize.West);
+				}
+			};
+
+			this._sizeHandleTopRight.mouseDown = (e: MouseEvent) => {
+				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+					new ViewResizeManager(e, theView, Resize.North | Resize.East);
+				}
+			};
+
+			this._sizeHandleBottomLeft.mouseDown = (e: MouseEvent) => {
+				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+					new ViewResizeManager(e, theView, Resize.South | Resize.West);
+				}
+			};
+
+			this._sizeHandleBottomRight.mouseDown = (e: MouseEvent) => {
+				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+					new ViewResizeManager(e, theView, Resize.South | Resize.East);
+				}
+			};
+			
+            this.isHorizontallySizable = true;
+            this.isVertictallySizable = true;			
 		}
-		
+
 		public applyFrame() {
 			super.applyFrame();
 			var thickness = this.resizeBorderThickness;
@@ -866,16 +930,46 @@ module red {
 			this._sizeHandleTopRight.frame = RectMake(this.frame.size.width - thickness, 0, thickness, thickness);
 			this._sizeHandleBottomLeft.frame = RectMake(0, this.frame.size.height - thickness, thickness, thickness);
 			this._sizeHandleBottomRight.frame = RectMake(this.frame.size.width - thickness, this.frame.size.height - thickness, thickness, thickness);
-			this._sizeHandleHorizontallyLeft.frame =  RectMake(0, thickness, thickness, this.frame.size.height - (2 * thickness));
+			this._sizeHandleHorizontallyLeft.frame = RectMake(0, thickness, thickness, this.frame.size.height - (2 * thickness));
 			this._sizeHandleHorizontallyRight.frame = RectMake(this.frame.size.width - thickness, thickness, thickness, this.frame.size.height - (2 * thickness));
 			this._sizeHandleVerticallyTop.frame = RectMake(thickness, 0, this.frame.size.width - (2 * thickness), thickness);
 			this._sizeHandleVerticallyallyBottom.frame = RectMake(thickness, this.frame.size.height - thickness, this.frame.size.width - (2 * thickness), thickness);
-			
-			this._sizeHandleVerticallyTop.setBackgroundColor(colors.blue);
 		}
 	}
 
-	export class Window extends UserResizableView {
+	export class UserDraggableView extends UserResizableView {
+		
+		private _isDraggable : boolean;
+		public get isDraggable() : boolean {
+			return this._isDraggable && this._dragHandleView != null;
+		}
+		public set isDraggable(v : boolean) {
+			this._isDraggable = v;
+		}
+		
+		private _dragHandleView : View;
+		public get dragHandleView() : View {
+			return this._dragHandleView || this;
+		}
+		public set dragHandleView(v : View) {
+			if (v != this._dragHandleView) {
+				this._dragHandleView = v;
+				
+				if (this.isDraggable)
+					this.dragHandleView.mouseDown = (e:MouseEvent) => {
+						new ViewDragManager(e, this);
+					};
+				else
+					this.dragHandleView.mouseDown = (e:MouseEvent) => {};
+			}
+		}
+		
+		constructor(aRect:Rect) {
+			super(aRect);
+		}
+	}
+
+	export class Window extends UserDraggableView {
 		private _titleBar: View;
 		private _contentView: View;
 		private _windowManager: WindowManager;
@@ -897,12 +991,15 @@ module red {
 			this._windowManager = application.windowManager;
             this._windowManager.windows.push(this);
 
-			this._titleBar = new TitleBar(RectMake(0, this.resizeBorderThickness, this.frame.size.width, this.resizeBorderThickness+26));
+			this._titleBar = new TitleBar(RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26));
+			this.isDraggable = true;
+			this.dragHandleView = this._titleBar;
+
 			this.addSubView(this._titleBar);
-			var m = 2;
+			var m = this.resizeBorderThickness;
 			this._contentView = this.addSubView(new ContentView(
 				RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m)));
-			
+
 			this.allowDragAndDrop = true;
 			this.applyFrame();
 
@@ -917,12 +1014,13 @@ module red {
 
 		public applyFrame(): void {
 			super.applyFrame();
-			this._titleBar.frame = RectMake(0, this.resizeBorderThickness, this.frame.size.width, this.resizeBorderThickness+26);
-			var m = 2;
+			this._titleBar.frame = RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26);
+			var m = this.resizeBorderThickness;
 			this._contentView.frame = RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m);
 		}
 		public mouseDown(e: MouseEvent): void {
 			this.orderFront();
+			
 		}
 		public mouseUp(e: MouseEvent): void {
 
@@ -966,33 +1064,4 @@ module red {
 	}
 
 	export var application = new Application();
-
-
-	var stringToFunction = function(str) {
-		var arr = str.split(".");
-
-		var fn = (window || this);
-		for (var i = 0, len = arr.length; i < len; i++) {
-			fn = fn[arr[i]];
-		}
-
-		if (typeof fn !== "function") {
-			throw new Error("function not found");
-		}
-
-		return fn;
-	};
-
-	class Foo extends View {
-		constructor(rect: Rect, content: any = {}) {
-			super(rect);
-
-			for (var key in content) {
-				if (content.hasOwnProperty(key)) {
-					var fn = stringToFunction(key);
-
-				}
-			}
-		}
-	}
 }
