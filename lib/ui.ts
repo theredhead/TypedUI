@@ -1,3 +1,6 @@
+/**
+ * © Kris Herlaar <kris@theredhead.nl>
+ */
 module red {
 
 	export function typeId(anObject: Object): string {
@@ -82,148 +85,13 @@ module red {
 		}
 	}
 
-	// export class Point extends Observable {
-	// 	private _x: number;
-	// 	private _y: number;
-
-	// 	public get x(): number {
-	// 		return this._x;
-	// 	}
-	// 	public set x(value: number) {
-	// 		if (this._x != value) {
-	// 			this.notifyPropertyWillChange('x');
-	// 			this._x = value;
-	// 			this.notifyPropertyDidChange('x');
-	// 		}
-	// 	}
-	// 	public get y(): number {
-	// 		return this._y;
-	// 	}
-	// 	public set y(value) {
-	// 		if (this._y != value) {
-	// 			this.notifyPropertyWillChange('y');
-	// 			this._y = value;
-	// 			this.notifyPropertyDidChange('y');
-	// 		}
-	// 	}
-
-	// 	constructor(x: number, y: number) {
-	// 		super();
-	// 		this._x = x;
-	// 		this._y = y;
-	// 	}
-	// }
-	// export class Size extends Observable {
-	// 	private _width: number;
-	// 	private _height: number;
-
-	// 	public get width(): number {
-	// 		return this._width;
-	// 	}
-	// 	public set width(value: number) {
-	// 		if (this._width != value) {
-	// 			this.notifyPropertyWillChange('width');
-	// 			this._width = value;
-	// 			this.notifyPropertyDidChange('width');
-	// 		}
-	// 	}
-	// 	public get height(): number {
-	// 		return this._height;
-	// 	}
-	// 	public set height(value) {
-	// 		if (this._height != value) {
-	// 			this.notifyPropertyWillChange('height');
-	// 			this._height = value;
-	// 			this.notifyPropertyDidChange('height');
-	// 		}
-	// 	}
-
-	// 	constructor(width: number, height: number) {
-	// 		super();
-	// 		this._height = height;
-	// 		this._width = width;
-	// 	}
-	// }
-	// export class Rect extends Observable {
-	// 	private _origin: Point;
-	// 	private _size: Size;
-
-	// 	public get origin(): Point {
-	// 		return this._origin;
-	// 	}
-	// 	public set origin(value: Point) {
-	// 		if (this._origin != value) {
-	// 			this.notifyPropertyWillChange('origin');
-	// 			this._origin = value;
-	// 			this.notifyPropertyDidChange('origin');
-	// 		}
-	// 	}
-	// 	public get size(): Size {
-	// 		return this._size;
-	// 	}
-	// 	public set size(value: Size) {
-	// 		if (this._size != value) {
-	// 			this.notifyPropertyWillChange('size');
-	// 			this._size = value;
-	// 			this.notifyPropertyDidChange('size');
-	// 		}
-	// 	}
-
-	// 	public shrink(pixels: number): Rect {
-	// 		return RectMake(
-	// 			this.origin.x + pixels,
-	// 			this.origin.y + pixels,
-	// 			this.size.width - 2 * pixels,
-	// 			this.size.height - 2 * pixels);
-	// 	}
-
-	// 	public copy(): Rect {
-	// 		return RectMake(
-	// 			this.origin.x,
-	// 			this.origin.y,
-	// 			this.size.width,
-	// 			this.size.height);
-	// 	}
-	// 	public toClipString(): string {
-	// 		return 'rect(0px,' + (this.size.width).toFixed(0) + 'px,' + (this.size.height).toFixed(0) + 'px,0px)';
-	// 	}
-
-	// 	public adjustRectsToFitHorizontally(rects: Array<Rect>, margin: number = 0) {
-	// 		var availableWidth = this.size.width,
-	// 			singleRectWidth = (availableWidth - ((1 + rects.length) * margin)) / rects.length,
-	// 			singleRectHeight = this.size.height - (2 * margin);
-
-	// 		for (var ix = 0; ix < rects.length; ix++) {
-	// 			rects[ix].origin.y = margin;
-	// 			rects[ix].origin.x = ((ix + 1) * margin) + (ix * singleRectWidth);
-	// 			rects[ix].size.width = singleRectWidth;
-	// 			rects[ix].size.height = singleRectHeight;
-	// 		}
-	// 	}
-	// 	public adjustRectsToFitVertically(rects: Array<Rect>, margin: number = 0) {
-	// 		var availableHeight = this.size.height,
-	// 			singleRectHeight = (availableHeight - ((1 + rects.length) * margin)) / rects.length,
-	// 			singleRectWidth = this.size.width - (2 * margin);
-
-	// 		for (var ix = 0; ix < rects.length; ix++) {
-	// 			rects[ix].origin.x = margin;
-	// 			rects[ix].origin.y = ((ix + 1) * margin) + (ix * singleRectHeight);
-	// 			rects[ix].size.width = singleRectWidth;
-	// 			rects[ix].size.height = singleRectHeight;
-	// 		}
-	// 	}
-
-	// 	constructor(origin: Point, size: Size) {
-	// 		super();
-	// 		this._origin = origin;
-	// 		this._size = size;
-	// 	}
-	// }
-	
-	
 	export class Point {
 		public x: number;
 		public y: number;
+
+        public toString() : string {
+            return 'Point('+this.x+', '+this.y+')';
+        }
 
 		constructor(x: number, y: number) {
 			this.x = x;
@@ -234,7 +102,11 @@ module red {
 		public width: number;
 		public height: number;
 
-		constructor(width: number, height: number) {
+        public toString() : string {
+            return 'Size('+this.width+', '+this.height+')';
+        }
+
+        constructor(width: number, height: number) {
 			this.height = height;
 			this.width = width;
 		}
@@ -310,6 +182,19 @@ module red {
 		private _color: Color;
 		private _backgroundColor: Color;
 		private _backgroundImage: string;
+        private _visible: boolean = true;
+
+        public get visible() : boolean {
+            return this._visible;
+        }
+        public set visible(v:boolean) {
+            if (this._visible != v) {
+                this._visible = v;
+                this.element.style.visibility = this._visible
+                    ? 'visible'
+                    : 'hidden';
+            }
+        }
 
 		public setCursor(crsr: string): void {
 			this._cursor = crsr;
@@ -339,13 +224,25 @@ module red {
 			this._clipsContent = v;
 		}
 
-		private _frame: Rect;
+        /**
+         * treat as private.
+         */
+		public _frame: Rect;
 		public get frame(): Rect {
 			return this._frame;
 		}
 		public set frame(v: Rect) {
-			this._frame = v;
+            if (this._frame != v) {
+                var oldFrame = this._frame;
+                this.willUpdateFrame(oldFrame, v);
+                this._frame = v;
+                this.didUpdateFrame(oldFrame, v);
+                this.applyFrame();
+            }
 		}
+
+        public willUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {}
+        public didUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {}
 
 		private _tag: string;
 		public get tag(): string {
@@ -477,7 +374,27 @@ module red {
 		white: new Color(255, 255, 255)
 	};
 
+	enum Autoresize
+	{
+		LockedTop		= 1,
+		LockedLeft		= 2,
+		LockedBottom	= 4,
+		LockedRight		= 8,
+		WidthSizable	= 16,
+		HeightSizable	= 32
+	}
+    var viewId = 0;
 	export class View extends UIElement {
+
+        private _identifier:string;
+
+        public get identifier() : string {
+            return this._identifier;
+        }
+
+        public toString() : string {
+            return this.identifier;
+        }
 
 		private _parentView: View;
 		public get parentView(): View {
@@ -487,15 +404,15 @@ module red {
 			this._parentView = aView;
 		}
 
-
-		private _autoresizingMask: boolean;
-		public get autoresizingMask(): boolean {
+		private _autoresizingMask: number;
+		public get autoresizingMask(): number {
 			return this._autoresizingMask;
 		}
-		public set autoresizingMask(v: boolean) {
-			this._autoresizingMask = v;
+		public set autoresizingMask(v: number) {
+			if(this._autoresizingMask = v) {
+				this._autoresizingMask = v
+			}
 		}
-
 
 		private _autoresizesChildViews: string;
 		public get autoresizesChildViews(): string {
@@ -505,26 +422,20 @@ module red {
 			this._autoresizesChildViews = v;
 		}
 
-		private _adjustToParentRect(rect: Rect): void {
-
+		public resizeSubviewsWithOldSize(size: Size): void {
+            //console.log(
+            //    'resized ' + this.toString() +
+            //    ' from size: ' + this.frame.size.toString() +
+            //    ' to size: ' + size.toString()
+            //);
 		}
 
-		public resizeInRect(rect: Rect): void {
-			this._adjustToParentRect(rect);
-			var frame = this.frame;
-			if (this.autoresizesChildViews) {
-				for (var ix = 0; ix < this._subViews.length; ix++) {
-					this._subViews[ix]._adjustToParentRect(frame);
-				}
-			}
-		}
 		public applyFrame(): void {
 			super.applyFrame();
 			for (var ix = 0; ix < this._subViews.length; ix++) {
 				this._subViews[ix].applyFrame();
 			}
 		}
-
 
 		private _isResizing: boolean;
 		public get isResizing(): boolean {
@@ -573,11 +484,12 @@ module red {
 				offsetX = parentFrame.size.width / 2 - myFrame.size.width / 2,
 				offsetY = parentFrame.size.height / 2 - myFrame.size.height / 2;
 			this.frame.origin = PointMake(offsetX, offsetY);
-			this.draw();
+            this.applyFrame();
 		}
 
 		constructor(frame: Rect) {
 			super(frame);
+            this._identifier = typeId(this) + (viewId++).toString();
 			this._isBeingDragged = false;
 			this._isResizing = false;
 
@@ -590,7 +502,7 @@ module red {
 		public mouseUp(e: MouseEvent): void { }
 
 		public draw(): void {
-			this.applyFrame();
+            this.applyFrame();
 		}
 	}
 
@@ -785,21 +697,21 @@ module red {
 
 	export class UserResizableView extends View {
 
-		private _minimumSize: Rect;
-		public set minimumSize(rect: Rect) {
-			this._minimumSize = rect;
-		}
-		public get minimumSize(): Rect {
-			return this._minimumSize;
-		}
+        private _minimumSize:Size;
+        public get minimumSize() : Size {
+            return this._minimumSize;
+        }
+        public set minimumSize(v:Size) {
+            this._minimumSize = v;
+        }
 
-		private _maximumSize: Rect;
-		public get maximumSize(): Rect {
-			return this._maximumSize;
-		}
-		public set maximumSize(v: Rect) {
-			this._maximumSize = v;
-		}
+        private _maximumSize:Size;
+        public get maximumSize() : Size {
+            return this._maximumSize;
+        }
+        public set maximumSize(v:Size) {
+            this._maximumSize = v;
+        }
 
 		private _isHorizontallySizable: boolean;
 		public get isHorizontallySizable(): boolean {
@@ -922,6 +834,23 @@ module red {
             this.isHorizontallySizable = true;
             this.isVertictallySizable = true;			
 		}
+
+        public willUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {
+            if (this.minimumSize && newFrame.size.width < this.minimumSize.width) {
+                newFrame.size.width = this.minimumSize.width;
+            }
+            if (this.minimumSize && newFrame.size.height< this.minimumSize.height) {
+                newFrame.size.height= this.minimumSize.height;
+            }
+            if (this.maximumSize && newFrame.size.width > this.maximumSize.width) {
+                newFrame.size.width = this.maximumSize.width;
+            }
+            if (this.maximumSize && newFrame.size.height> this.maximumSize.height) {
+                newFrame.size.height= this.maximumSize.height;
+            }
+
+            this.resizeSubviewsWithOldSize(oldFrame.size);
+        }
 
 		public applyFrame() {
 			super.applyFrame();

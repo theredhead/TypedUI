@@ -20,8 +20,8 @@ div {
 .Window {
 	
 	.TitleBar {
-		-webkit-transition-property: background-color, color;
-		-webkit-transition-duration: .5s; 
+		-webkit-transition-property: background-color, color, box-shadow;
+		-webkit-transition-duration: 1s;
 	} 
 	
 	border-top-left-radius: @window-top-radius;
@@ -110,7 +110,6 @@ div {
 						box-shadow: 0 1px 3px fadeout(@resize-button-color, @fadeFactor);
 					} 
 				}
-				box-shadow: inset 0 1 3px white; 
 			}
 			&:hover {
 				.WindowTool {

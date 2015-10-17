@@ -12,6 +12,9 @@
 					red.application.desktop.setBackgroundImage('img/mountains.jpg');
 					
 					var win = new red.Window();
+						win.minimumSize = red.SizeMake(64, 64);
+						win.maximumSize = red.SizeMake(640, 480);
+
 					red.application.desktop.addSubView(win);
 					win.center();
 					
