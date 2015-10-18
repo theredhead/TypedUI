@@ -2,6 +2,10 @@
 * © Kris Herlaar <kris@theredhead.nl>
 */
 declare module red {
+    var settings: {
+        debug: boolean;
+        displayRectInfo: boolean;
+    };
     function typeId(anObject: Object): string;
     class Notification {
         private _sender;
@@ -35,6 +39,7 @@ declare module red {
         constructor();
     }
     class Point {
+        private prep(n);
         private _x;
         public x : number;
         private _y;
@@ -43,6 +48,7 @@ declare module red {
         constructor(x: number, y: number);
     }
     class Size {
+        private prep(n);
         private _width;
         public width : number;
         private _height;
@@ -55,6 +61,8 @@ declare module red {
         public size: Size;
         public shrink(pixels: number): Rect;
         public copy(): Rect;
+        public toString(): string;
+        public isEquivalentTToRect(otherRect: Rect): boolean;
         public toClipString(): string;
         public adjustRectsToFitHorizontally(rects: Rect[], margin?: number): void;
         public adjustRectsToFitVertically(rects: Rect[], margin?: number): void;
@@ -219,6 +227,12 @@ declare module red {
         public dragHandleView : View;
         constructor(aRect: Rect);
     }
+    enum WindowCloseReason {
+        UserAction = 0,
+    }
+    enum WindowMinimizeReason {
+        UserAction = 0,
+    }
     class Window extends UserDraggableView {
         private _titleBar;
         private _contentView;
@@ -229,11 +243,29 @@ declare module red {
         private _closeTool;
         private _resizeTool;
         private _minimizeTool;
+        private unminimizedElement;
         public orderFront(): void;
         constructor(aRect?: Rect);
+        public close(reason?: WindowCloseReason): void;
+        public windowShouldClose(reason: WindowCloseReason): boolean;
+        public windowWillClose(): void;
+        public windowDidClose(): void;
+        public minimize(reason?: WindowMinimizeReason): void;
+        public windowShouldMinimize(reason: WindowMinimizeReason): boolean;
+        public windowWillMinimize(): void;
+        public windowDidMinimize(): void;
+        public unminimize(reason?: WindowMinimizeReason): void;
+        public windowShouldUnMinimize(reason: WindowMinimizeReason): boolean;
+        public windowWillUnMinimize(): void;
+        public windowDidUnMinimize(): void;
+        public setupWindow(): void;
         public applyFrame(): void;
         public mouseDown(e: MouseEvent): void;
         public mouseUp(e: MouseEvent): void;
+    }
+    class AboutWindow extends Window {
+        constructor();
+        public setupWindow(): void;
     }
     interface IApplicationDelegate {
         applicationDidFinishLaunching?: Function;
@@ -248,6 +280,8 @@ declare module red {
         constructor(delegate?: IApplicationDelegate);
         public initialize(): void;
         public run(): void;
+        private aboutWindow;
+        public about(): void;
     }
     var application: Application;
 }

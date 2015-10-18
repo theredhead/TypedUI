@@ -2,216 +2,251 @@
  * © Kris Herlaar <kris@theredhead.nl>
  */
 module red {
+    export var settings = {
+        debug: true,
+        displayRectInfo: true
+    };
 
-	export function typeId(anObject: Object): string {
-		var matches = /function (.{1,})\(/.exec(anObject['constructor'].toString());
-		return (matches && matches.length > 1) ? matches[1] : '';
-	}
+    export function typeId(anObject:Object):string {
+        var matches = /function (.{1,})\(/.exec(anObject['constructor'].toString());
+        return (matches && matches.length > 1) ? matches[1] : '';
+    }
 
-	export class Notification {
-		private _sender: Object;
-		public get notificationKind(): string {
-			return typeId(this);
-		}
-		public get sender() {
-			return this._sender;
-		}
+    export class Notification {
+        private _sender:Object;
 
-		constructor(sender: Object) {
-			this._sender = sender;
-		}
-	}
-	export class PropertyChangeNotification extends Notification {
-		private _propertyName: string;
-		get propertyName(): string {
-			return this._propertyName;
-		}
-		constructor(propertyName: string, sender: Object) {
-			super(sender);
-			this._propertyName = propertyName;
-		}
-	}
-	export class PropertyWillChangeNotification extends PropertyChangeNotification {
-	}
-	export class PropertyDidChangeNotification extends PropertyChangeNotification {
-	}
+        public get notificationKind():string {
+            return typeId(this);
+        }
 
-	export class NotificationRequest {
-		private _notificationKind: string;
-		private _target: Object;
-		private _action: string;
+        public get sender() {
+            return this._sender;
+        }
 
-		public get notificationKind(): string {
-			return this._notificationKind;
-		}
+        constructor(sender:Object) {
+            this._sender = sender;
+        }
+    }
+    export class PropertyChangeNotification extends Notification {
+        private _propertyName:string;
+        get propertyName():string {
+            return this._propertyName;
+        }
 
-		public act(notification: Notification): void {
-			this._target[this._action](notification.sender);
-		}
-		constructor(aNotificationKind: string, aTarget: Object, anAction: string) {
-			this._notificationKind = aNotificationKind;
-			this._target = aTarget
-			this._action = anAction;
-		}
-	}
+        constructor(propertyName:string, sender:Object) {
+            super(sender);
+            this._propertyName = propertyName;
+        }
+    }
+    export class PropertyWillChangeNotification extends PropertyChangeNotification {
+    }
+    export class PropertyDidChangeNotification extends PropertyChangeNotification {
+    }
 
-	export class Observable {
-		private _observers: Array<NotificationRequest>;
+    export class NotificationRequest {
+        private _notificationKind:string;
+        private _target:Object;
+        private _action:string;
 
-		public registerObserver(notificationKind: string, target: Object, action: string) {
-			this._observers.push(new NotificationRequest(notificationKind, target, action));
-		}
+        public get notificationKind():string {
+            return this._notificationKind;
+        }
 
-		public notifyPropertyWillChange(propertyName: string) {
-			this.notifyListeners(new PropertyWillChangeNotification(propertyName, this));
-		}
+        public act(notification:Notification):void {
+            this._target[this._action](notification.sender);
+        }
 
-		public notifyPropertyDidChange(propertyName: string) {
-			this.notifyListeners(new PropertyDidChangeNotification(propertyName, this));
-		}
+        constructor(aNotificationKind:string, aTarget:Object, anAction:string) {
+            this._notificationKind = aNotificationKind;
+            this._target = aTarget
+            this._action = anAction;
+        }
+    }
 
-		public notifyListeners(notification: Notification): void {
-			if (this._observers && this._observers.length) {
-				for (var ix = 0; ix < this._observers.length; ix++) {
-					if (typeId(this._observers[ix]) === notification.notificationKind) {
-						this._observers[ix].act(notification);
-					}
-				}
-			}
-		}
+    export class Observable {
+        private _observers:Array<NotificationRequest>;
 
-		constructor() {
-			this._observers = [];
-		}
-	}
+        public registerObserver(notificationKind:string, target:Object, action:string) {
+            this._observers.push(new NotificationRequest(notificationKind, target, action));
+        }
 
-	export class Point {
-        private _x : number;
-        public get x() : number {
+        public notifyPropertyWillChange(propertyName:string) {
+            this.notifyListeners(new PropertyWillChangeNotification(propertyName, this));
+        }
+
+        public notifyPropertyDidChange(propertyName:string) {
+            this.notifyListeners(new PropertyDidChangeNotification(propertyName, this));
+        }
+
+        public notifyListeners(notification:Notification):void {
+            if (this._observers && this._observers.length) {
+                for (var ix = 0; ix < this._observers.length; ix++) {
+                    if (typeId(this._observers[ix]) === notification.notificationKind) {
+                        this._observers[ix].act(notification);
+                    }
+                }
+            }
+        }
+
+        constructor() {
+            this._observers = [];
+        }
+    }
+
+    export class Point {
+        private prep(n:number):number {
+            return n;
+        }
+
+        private _x:number;
+        public get x():number {
             return this._x;
         }
-        public set x(v: number) {
-            this._x = Math.round(v);
+
+        public set x(v:number) {
+            this._x = this.prep(v);
         }
 
-        private _y : number;
-        public get y() : number {
+        private _y:number;
+        public get y():number {
             return this._y;
         }
-        public set y(v: number) {
-            this._y = Math.round(v);
+
+        public set y(v:number) {
+            this._y = this.prep(v);
         }
 
-        public toString() : string {
-            return 'Point('+this.x+', '+this.y+')';
+        public toString():string {
+            return 'Point(' + this.x + ', ' + this.y + ')';
         }
 
-		constructor(x: number, y: number) {
-			this.x = x;
-			this.y = y;
-		}
-	}
-	export class Size {
-		private _width: number;
-        public get width() : number {
+        constructor(x:number, y:number) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+    export class Size {
+        private prep(n:number):number {
+            return n;
+        }
+
+        private _width:number;
+        public get width():number {
             return this._width;
         }
+
         public set width(v:number) {
-            this._width = Math.round(v);
+            this._width = this.prep(v);
         }
-		private _height: number;
-        public get height() : number {
+
+        private _height:number;
+        public get height():number {
             return this._height;
         }
+
         public set height(v:number) {
-            this._height = Math.round(v);
+            this._height = this.prep(v);
         }
 
-        public toString() : string {
-            return 'Size('+this.width+', '+this.height+')';
+        public toString():string {
+            return 'Size(' + this.width + ', ' + this.height + ')';
         }
 
-        constructor(width: number, height: number) {
-			this.height = height;
-			this.width = width;
-		}
-	}
-	export class Rect {
-		public origin: Point;
-		public size: Size;
+        constructor(width:number, height:number) {
+            this.height = height;
+            this.width = width;
+        }
+    }
+    export class Rect {
+        public origin:Point;
+        public size:Size;
 
-		public shrink(pixels: number): Rect {
-			return RectMake(
-				this.origin.x + pixels,
-				this.origin.y + pixels,
-				this.size.width - 2 * pixels,
-				this.size.height - 2 * pixels);
-		}
+        public shrink(pixels:number):Rect {
+            return RectMake(
+                this.origin.x + pixels,
+                this.origin.y + pixels,
+                this.size.width - 2 * pixels,
+                this.size.height - 2 * pixels);
+        }
 
-		public copy(): Rect {
-			return RectMake(
-				this.origin.x,
-				this.origin.y,
-				this.size.width,
-				this.size.height);
-		}
-		public toClipString(): string {
-			return 'rect(0px,' + (this.size.width).toFixed(0) + 'px,' + (this.size.height).toFixed(0) + 'px,0px)';
-		}
+        public copy():Rect {
+            return RectMake(
+                this.origin.x,
+                this.origin.y,
+                this.size.width,
+                this.size.height);
+        }
 
-		public adjustRectsToFitHorizontally(rects: Array<Rect>, margin: number = 0) {
-			var availableWidth = this.size.width,
-				singleRectWidth = (availableWidth - ((1 + rects.length) * margin)) / rects.length,
-				singleRectHeight = this.size.height - (2 * margin);
+        public toString():string {
+            return [this.origin.x, this.origin.y, this.size.width, this.size.height].join(', ');
+        }
 
-			for (var ix = 0; ix < rects.length; ix++) {
-				rects[ix].origin.y = margin;
-				rects[ix].origin.x = ((ix + 1) * margin) + (ix * singleRectWidth);
-				rects[ix].size.width = singleRectWidth;
-				rects[ix].size.height = singleRectHeight;
-			}
-		}
-		public adjustRectsToFitVertically(rects: Array<Rect>, margin: number = 0) {
-			var availableHeight = this.size.height,
-				singleRectHeight = (availableHeight - ((1 + rects.length) * margin)) / rects.length,
-				singleRectWidth = this.size.width - (2 * margin);
+        public isEquivalentTToRect(otherRect:Rect) {
+            return this.toString() == otherRect.toString();
+        }
 
-			for (var ix = 0; ix < rects.length; ix++) {
-				rects[ix].origin.x = margin;
-				rects[ix].origin.y = ((ix + 1) * margin) + (ix * singleRectHeight);
-				rects[ix].size.width = singleRectWidth;
-				rects[ix].size.height = singleRectHeight;
-			}
-		}
+        public toClipString():string {
+            return 'rect(0px,' + (this.size.width).toFixed(0) + 'px,' + (this.size.height).toFixed(0) + 'px,0px)';
+        }
 
-		constructor(origin: Point, size: Size) {
-			this.origin = origin;
-			this.size = size;
-		}
-	}
-	export function PointMake(x, y): Point {
-		return new Point(x, y);
-	}
-	export function SizeMake(width, height): Size {
-		return new Size(width, height);
-	}
-	export function RectMake(x, y, width, height): Rect {
-		return new Rect(PointMake(x, y), SizeMake(width, height));
-	}
-	export function RectMakeZero(): Rect {
-		return RectMake(0, 0, 0, 0);
-	}
+        public adjustRectsToFitHorizontally(rects:Array<Rect>, margin:number = 0) {
+            var availableWidth = this.size.width,
+                singleRectWidth = (availableWidth - ((1 + rects.length) * margin)) / rects.length,
+                singleRectHeight = this.size.height - (2 * margin);
 
-	export class UIElement {
-		private _cursor: string;
-		private _color: Color;
-		private _backgroundColor: Color;
-		private _backgroundImage: string;
-        private _visible: boolean = true;
+            for (var ix = 0; ix < rects.length; ix++) {
+                rects[ix].origin.y = margin;
+                rects[ix].origin.x = ((ix + 1) * margin) + (ix * singleRectWidth);
+                rects[ix].size.width = singleRectWidth;
+                rects[ix].size.height = singleRectHeight;
+            }
+        }
 
-        public get visible() : boolean {
+        public adjustRectsToFitVertically(rects:Array<Rect>, margin:number = 0) {
+            var availableHeight = this.size.height,
+                singleRectHeight = (availableHeight - ((1 + rects.length) * margin)) / rects.length,
+                singleRectWidth = this.size.width - (2 * margin);
+
+            for (var ix = 0; ix < rects.length; ix++) {
+                rects[ix].origin.x = margin;
+                rects[ix].origin.y = ((ix + 1) * margin) + (ix * singleRectHeight);
+                rects[ix].size.width = singleRectWidth;
+                rects[ix].size.height = singleRectHeight;
+            }
+        }
+
+        constructor(origin:Point, size:Size) {
+            this.origin = origin;
+            this.size = size;
+        }
+    }
+    export function PointMake(x, y):Point {
+        return new Point(x, y);
+    }
+
+    export function SizeMake(width, height):Size {
+        return new Size(width, height);
+    }
+
+    export function RectMake(x, y, width, height):Rect {
+        return new Rect(PointMake(x, y), SizeMake(width, height));
+    }
+
+    export function RectMakeZero():Rect {
+        return RectMake(0, 0, 0, 0);
+    }
+
+    export class UIElement {
+        private _cursor:string;
+        private _color:Color;
+        private _backgroundColor:Color;
+        private _backgroundImage:string;
+        private _visible:boolean = true;
+
+        public get visible():boolean {
             return this._visible;
         }
+
         public set visible(v:boolean) {
             if (this._visible != v) {
                 this._visible = v;
@@ -221,185 +256,201 @@ module red {
             }
         }
 
-		public setCursor(crsr: string): void {
-			this._cursor = crsr;
-			this.applyFrame();
-		}
+        public setCursor(crsr:string):void {
+            this._cursor = crsr;
+            this.applyFrame();
+        }
 
-		public setColor(color: Color) {
-			this._color = color;
-			this.applyFrame();
-		}
+        public setColor(color:Color) {
+            this._color = color;
+            this.applyFrame();
+        }
 
-		public setBackgroundColor(color: Color) {
-			this._backgroundColor = color;
-			this.applyFrame();
-		}
+        public setBackgroundColor(color:Color) {
+            this._backgroundColor = color;
+            this.applyFrame();
+        }
 
-		public setBackgroundImage(anImageUrl: string) {
-			this._backgroundImage = anImageUrl;
-			this.applyFrame();
-		}
+        public setBackgroundImage(anImageUrl:string) {
+            this._backgroundImage = anImageUrl;
+            this.applyFrame();
+        }
 
-		private _clipsContent: boolean = true;
-		public get clipsContent(): boolean {
-			return this._clipsContent;
-		}
-		public set clipsContent(v: boolean) {
-			this._clipsContent = v;
-		}
+        private _clipsContent:boolean = true;
+        public get clipsContent():boolean {
+            return this._clipsContent;
+        }
+
+        public set clipsContent(v:boolean) {
+            this._clipsContent = v;
+        }
 
         /**
          * treat as private.
          */
-		public _frame: Rect;
-		public get frame(): Rect {
-			return this._frame;
-		}
-		public set frame(v: Rect) {
-            if (this._frame != v) {
+        public _frame:Rect;
+        public get frame():Rect {
+            return this._frame;
+        }
+
+        public set frame(v:Rect) {
+            if (!this._frame.isEquivalentTToRect(v)) {
                 var oldFrame = this._frame;
                 this.willUpdateFrame(oldFrame, v);
                 this._frame = v;
                 this.didUpdateFrame(oldFrame, v);
                 this.applyFrame();
             }
-		}
+        }
 
-        public willUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {}
-        public didUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {}
+        public willUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
+        }
 
-		private _tag: string;
-		public get tag(): string {
-			return this._tag;
-		}
-		public set tag(v: string) {
-			this._tag = v;
-		}
+        public didUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
+        }
 
-		private _element: HTMLElement;
-		public get element(): HTMLElement {
-			return this._element;
-		}
-		private _tagName: string = 'div';
-		public get tagName(): string {
-			return this._tagName;
-		}
-		private _cssClasses: Array<string> = [];
+        private _tag:string;
+        public get tag():string {
+            return this._tag;
+        }
 
-		constructor(frame: Rect) {
-			this.addCssClass('ui');
-			this.addCssClass(typeId(this));
-			this._frame = frame;
-			this._element = document.createElement(this.tagName);
-		}
+        public set tag(v:string) {
+            this._tag = v;
+        }
 
-		public applyFrame(): void {
-			this._element.style.position = 'absolute';
-			this._element.style.display = 'block';
-			this._element.style.top = this.frame.origin.y + 'px';
-			this._element.style.left = this.frame.origin.x + 'px';
-			this._element.style.height = this.frame.size.height + 'px';
-			this._element.style.width = this.frame.size.width + 'px';
+        private _element:HTMLElement;
+        public get element():HTMLElement {
+            return this._element;
+        }
+
+        private _tagName:string = 'div';
+        public get tagName():string {
+            return this._tagName;
+        }
+
+        private _cssClasses:Array<string> = [];
+
+        constructor(frame:Rect) {
+            this.addCssClass('ui');
+            this.addCssClass(typeId(this));
+            this._frame = frame;
+            this._element = document.createElement(this.tagName);
+        }
+
+        public applyFrame():void {
+            this._element.style.position = 'absolute';
+            this._element.style.display = 'block';
+            this._element.style.top = this.frame.origin.y + 'px';
+            this._element.style.left = this.frame.origin.x + 'px';
+            this._element.style.height = this.frame.size.height + 'px';
+            this._element.style.width = this.frame.size.width + 'px';
 
             if (this._cssClasses.length > 0)
-				this._element.setAttribute('class', this.cssCasses.join(' '));
-			else
-				this._element.removeAttribute('class');
+                this._element.setAttribute('class', this.cssCasses.join(' '));
+            else
+                this._element.removeAttribute('class');
 
-			if (this._cursor)
-				this.element.style.cursor = this._cursor;
-			if (this._backgroundColor)
-				this.element.style.backgroundColor = this._backgroundColor.toString();
-			if (this._backgroundImage)
-				this.element.style.background = 'url(' + this._backgroundImage + ')';
+            if (this._cursor)
+                this.element.style.cursor = this._cursor;
+            if (this._backgroundColor)
+                this.element.style.backgroundColor = this._backgroundColor.toString();
+            if (this._backgroundImage)
+                this.element.style.background = 'url(' + this._backgroundImage + ')';
+
+            if (settings.debug && settings.displayRectInfo)
+                this.element.title = this.frame.toString();
 
             if (this.clipsContent)
                 this._element.style.clip = this.frame.toClipString();
             else
                 this._element.style.clip = null;
-		}
+        }
 
-		public get cssCasses(): Array<string> {
-			return this._cssClasses;
-		}
-		public hasCssClass(aClass: string) {
-			return this._cssClasses.indexOf(aClass) > -1;
-		}
-		public addCssClass(aClass: string) {
-			if (!this.hasCssClass(aClass)) {
-				this._cssClasses.push(aClass);
-			}
-		}
-		public removeCssClass(aClass: string) {
-			if (!this.hasCssClass(aClass)) {
-				this._cssClasses.splice(this._cssClasses.indexOf(aClass));
-			}
-		}
-		public toggleCssClass(aClass: string) {
-			if (!this.hasCssClass(aClass)) {
-				this.removeCssClass(aClass);
-			} else {
-				this.addCssClass(aClass);
-			}
-		}
-	}
+        public get cssCasses():Array<string> {
+            return this._cssClasses;
+        }
 
-	export class Color {
-		private _r: number;
-		private _g: number;
-		private _b: number;
-		private _alpha: number;
+        public hasCssClass(aClass:string) {
+            return this._cssClasses.indexOf(aClass) > -1;
+        }
 
-		private adjustToByte(i: number): number {
-			var o = Math.ceil(i);
+        public addCssClass(aClass:string) {
+            if (!this.hasCssClass(aClass)) {
+                this._cssClasses.push(aClass);
+            }
+        }
 
-			if (o < 0) {
-				return 0;
-			} else if (o > 255) {
-				return 255;
-			}
-			else return o;
-		}
+        public removeCssClass(aClass:string) {
+            if (!this.hasCssClass(aClass)) {
+                this._cssClasses.splice(this._cssClasses.indexOf(aClass));
+            }
+        }
 
-		private adjustAlpha(i: number): number {
-			if (i < 0) {
-				return 0;
-			} else if (i > 1) {
-				return 1;
-			}
-			else return i;
-		}
-		constructor(r: number, g: number, b: number, alpha: number = 1.0) {
-			this._r = this.adjustToByte(r);
-			this._g = this.adjustToByte(g);
-			this._b = this.adjustToByte(b);
-			this._alpha = this.adjustAlpha(alpha);
-		}
+        public toggleCssClass(aClass:string) {
+            if (!this.hasCssClass(aClass)) {
+                this.removeCssClass(aClass);
+            } else {
+                this.addCssClass(aClass);
+            }
+        }
+    }
 
-		public toString(): string {
-			var result = 'rgba(' + [
-				this._r.toFixed(0),
-				this._g.toFixed(0),
-				this._b.toFixed(0),
-				this._alpha
-			].join(', ') + ')';
-			return result;
-		}
-	}
+    export class Color {
+        private _r:number;
+        private _g:number;
+        private _b:number;
+        private _alpha:number;
 
-	var colors = {
-		red: new Color(255, 0, 0),
-		green: new Color(0, 255, 0),
-		blue: new Color(0, 0, 255),
-		darkRed: new Color(127, 0, 0),
-		darkGreen: new Color(0, 127, 0),
-		darkBlue: new Color(0, 0, 127),
-		black: new Color(0, 0, 0),
-		white: new Color(255, 255, 255)
-	};
+        private adjustToByte(i:number):number {
+            var o = Math.ceil(i);
 
-    function resizeProportionally(r:Rect, oldSize:Size, newSize:Size) : Rect {
+            if (o < 0) {
+                return 0;
+            } else if (o > 255) {
+                return 255;
+            }
+            else return o;
+        }
+
+        private adjustAlpha(i:number):number {
+            if (i < 0) {
+                return 0;
+            } else if (i > 1) {
+                return 1;
+            }
+            else return i;
+        }
+
+        constructor(r:number, g:number, b:number, alpha:number = 1.0) {
+            this._r = this.adjustToByte(r);
+            this._g = this.adjustToByte(g);
+            this._b = this.adjustToByte(b);
+            this._alpha = this.adjustAlpha(alpha);
+        }
+
+        public toString():string {
+            var result = 'rgba(' + [
+                    this._r.toFixed(0),
+                    this._g.toFixed(0),
+                    this._b.toFixed(0),
+                    this._alpha
+                ].join(', ') + ')';
+            return result;
+        }
+    }
+
+    var colors = {
+        red: new Color(255, 0, 0),
+        green: new Color(0, 255, 0),
+        blue: new Color(0, 0, 255),
+        darkRed: new Color(127, 0, 0),
+        darkGreen: new Color(0, 127, 0),
+        darkBlue: new Color(0, 0, 127),
+        black: new Color(0, 0, 0),
+        white: new Color(255, 255, 255)
+    };
+
+    function resizeProportionally(r:Rect, oldSize:Size, newSize:Size):Rect {
         var fn = (lengthA, lengthB, distanceA) => {
             return (distanceA * lengthB) / lengthA;
         };
@@ -410,71 +461,76 @@ module red {
         return RectMake(x, y, w, h);
     }
 
-	enum Autoresize
-	{
-		LockedTop		= 1,
-		LockedLeft		= 2,
-		LockedBottom	= 4,
-		LockedRight		= 8,
-		WidthSizable	= 16,
-		HeightSizable	= 32
-	}
+    enum Autoresize
+    {
+        LockedTop = 1,
+        LockedLeft = 2,
+        LockedBottom = 4,
+        LockedRight = 8,
+        WidthSizable = 16,
+        HeightSizable = 32
+    }
     var viewId = 0;
-	export class View extends UIElement {
+    export class View extends UIElement {
 
         private _identifier:string;
         private _minimumSize:Size;
-        public get minimumSize() : Size {
+        public get minimumSize():Size {
             return this._minimumSize;
         }
+
         public set minimumSize(v:Size) {
             this._minimumSize = v;
         }
 
         private _maximumSize:Size;
-        public get maximumSize() : Size {
+        public get maximumSize():Size {
             return this._maximumSize;
         }
+
         public set maximumSize(v:Size) {
             this._maximumSize = v;
         }
 
-        public get identifier() : string {
+        public get identifier():string {
             return this._identifier;
         }
 
-        public toString() : string {
+        public toString():string {
             return this.identifier;
         }
 
-		private _parentView: View;
-		public get parentView(): View {
-			return this._parentView;
-		}
-		public set parentView(aView: View) {
-			this._parentView = aView;
-		}
+        private _parentView:View;
+        public get parentView():View {
+            return this._parentView;
+        }
 
-		private _autoresizingMask: number;
-		public get autoresizingMask(): number {
-			return this._autoresizingMask;
-		}
-		public set autoresizingMask(v: number) {
-			if(this._autoresizingMask = v) {
-				this._autoresizingMask = v
-			}
-		}
+        public set parentView(aView:View) {
+            this._parentView = aView;
+        }
 
-		private _autoresizesSubviews: boolean = false;
-		public get autoresizesSubviews(): boolean {
-			return this._autoresizesSubviews;
-		}
-		public set autoresizesSubviews(v: boolean) {
-			this._autoresizesSubviews = v;
-		}
+        private _autoresizingMask:number;
+        public get autoresizingMask():number {
+            return this._autoresizingMask;
+        }
+
+        public set autoresizingMask(v:number) {
+            if (this._autoresizingMask = v) {
+                this._autoresizingMask = v
+            }
+        }
+
+        private _autoresizesSubviews:boolean = false;
+        public get autoresizesSubviews():boolean {
+            return this._autoresizesSubviews;
+        }
+
+        public set autoresizesSubviews(v:boolean) {
+            this._autoresizesSubviews = v;
+        }
 
 
-        public willUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {
+        public willUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
             if (this.minimumSize && newFrame.size.width < this.minimumSize.width) {
                 newFrame.size.width = this.minimumSize.width;
             }
@@ -490,265 +546,290 @@ module red {
 
             this.resizeSubviews(oldFrame.size, newFrame.size);
         }
-        public didUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {
+
+        public didUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
         }
 
-		public resizeSubviews(oldSize: Size, newSize: Size): void {
+        public resizeSubviews(oldSize:Size, newSize:Size):void {
             if (oldSize != null) {
                 if (this.autoresizesSubviews) {
                     var oldRect = RectMake(0, 0, oldSize.width, oldSize.height);
-                    for (var ix = 0; ix < this._subViews.length; ix ++) {
+                    for (var ix = 0; ix < this._subViews.length; ix++) {
                         var sub = this._subViews[ix],
+                            frame = sub.frame.copy(),
                             rect = resizeProportionally(sub.frame, oldSize, newSize);
 
-                        //if ((sub.autoresizingMask & Autoresize.LockedLeft) == Autoresize.LockedLeft) {
-                        //    rect.origin.x = sub.frame.origin.x;
-                        //}
-                        //if ((sub.autoresizingMask & Autoresize.LockedTop)  == Autoresize.LockedTop) {
-                        //    rect.origin.y = sub.frame.origin.y;
-                        //}
-                        //if ((sub.autoresizingMask & Autoresize.LockedRight) == Autoresize.LockedRight) {
-                        //    rect.size.width = oldSize.width - (sub.frame.size.width + sub.frame.origin.x);
-                        //}
-                        //if ((sub.autoresizingMask & Autoresize.LockedBottom) == Autoresize.LockedBottom) {
-                        //    rect.size.height = oldSize.height - (sub.frame.size.height + sub.frame.origin.y);
-                        //}
+                        if ((sub.autoresizingMask & Autoresize.LockedLeft) == Autoresize.LockedLeft) {
+                            rect.origin.x = sub.frame.origin.x;
+                        }
+                        if ((sub.autoresizingMask & Autoresize.LockedTop) == Autoresize.LockedTop) {
+                            rect.origin.y = sub.frame.origin.y;
+                        }
+                        if ((sub.autoresizingMask & Autoresize.LockedRight) == Autoresize.LockedRight) {
+                            var distanceFromOldRight = oldSize.width - (frame.size.width + frame.origin.x);
+                            rect.size.width = newSize.width - rect.origin.x - distanceFromOldRight;
+                        }
+                        if ((sub.autoresizingMask & Autoresize.LockedBottom) == Autoresize.LockedBottom) {
+                            var distanceFromOldBottom = oldSize.height - (frame.size.height + frame.origin.y);
+                            rect.size.height = newSize.height - rect.origin.y - distanceFromOldBottom;
+                        }
 
-
+                        //((s,r) => {window.setTimeout(() => {s.frame = r;}, 1);})(sub, rect);
                         sub.frame = rect;
                     }
                 }
             }
-		}
+        }
 
-		public applyFrame(): void {
+        public applyFrame():void {
             super.applyFrame();
             for (var ix = 0; ix < this._subViews.length; ix++) {
-				var view = this._subViews[ix];
+                var view = this._subViews[ix];
                 view.applyFrame();
             }
-		}
+        }
 
-		private _isResizing: boolean;
-		public get isResizing(): boolean {
-			return this._isResizing;
-		}
-		public set isResizing(v: boolean) {
-			this._isResizing = v;
-		}
+        private _isResizing:boolean;
+        public get isResizing():boolean {
+            return this._isResizing;
+        }
 
-
-		private _isBeingDragged: boolean;
-		public get isBeingDragged(): boolean {
-			return this._isBeingDragged;
-		}
-		public set isBeingDragged(v: boolean) {
-			this._isBeingDragged = v;
-		}
+        public set isResizing(v:boolean) {
+            this._isResizing = v;
+        }
 
 
-		private _allowDragAndDrop: boolean;
-		public get allowDragAndDrop(): boolean {
-			return this._allowDragAndDrop;
-		}
-		public set allowDragAndDrop(v: boolean) {
-			this._allowDragAndDrop = v;
-		}
+        private _isBeingDragged:boolean;
+        public get isBeingDragged():boolean {
+            return this._isBeingDragged;
+        }
 
-		private _subViews: Array<View> = [];
+        public set isBeingDragged(v:boolean) {
+            this._isBeingDragged = v;
+        }
 
-		public addSubview(aView: View): View {
-			this._subViews.push(aView);
-			aView._parentView = this;
-			this.element.appendChild(aView.element);
-			aView.draw();
-			return aView;
-		}
-		public removeSubview(aView: View): View {
-			this._subViews.splice(this._subViews.indexOf(aView));
-			this.element.removeChild(aView.element);
-			return aView;
-		}
 
-		public center(inRect: Rect = null): void {
-			var parentFrame = inRect || this._parentView.frame,
-				myFrame = this.frame,
-				offsetX = parentFrame.size.width / 2 - myFrame.size.width / 2,
-				offsetY = parentFrame.size.height / 2 - myFrame.size.height / 2;
-			this.frame.origin = PointMake(offsetX, offsetY);
+        private _allowDragAndDrop:boolean;
+        public get allowDragAndDrop():boolean {
+            return this._allowDragAndDrop;
+        }
+
+        public set allowDragAndDrop(v:boolean) {
+            this._allowDragAndDrop = v;
+        }
+
+        private _subViews:Array<View> = [];
+
+        public addSubview(aView:View):View {
+            this._subViews.push(aView);
+            aView._parentView = this;
+            this.element.appendChild(aView.element);
+            aView.draw();
+            return aView;
+        }
+
+        public removeSubview(aView:View):View {
+            this._subViews.splice(this._subViews.indexOf(aView));
+            this.element.removeChild(aView.element);
+            return aView;
+        }
+
+        public center(inRect:Rect = null):void {
+            var parentFrame = inRect || this._parentView.frame,
+                myFrame = this.frame,
+                offsetX = parentFrame.size.width / 2 - myFrame.size.width / 2,
+                offsetY = parentFrame.size.height / 2 - myFrame.size.height / 2;
+            this.frame.origin = PointMake(offsetX, offsetY);
             this.applyFrame();
-		}
+        }
 
-		constructor(frame: Rect) {
-			super(frame);
+        constructor(frame:Rect) {
+            super(frame);
             this._identifier = typeId(this) + (viewId++).toString();
-			this._isBeingDragged = false;
-			this._isResizing = false;
+            this._isBeingDragged = false;
+            this._isResizing = false;
 
-			var me = this;
-			this.element.addEventListener('mousedown', (e) => { me.mouseDown(e) });
-			this.element.addEventListener('mouseup', (e) => { me.mouseUp(e) });
-		}
+            var me = this;
+            this.element.addEventListener('mousedown', (e) => {
+                me.mouseDown(e)
+            });
+            this.element.addEventListener('mouseup', (e) => {
+                me.mouseUp(e)
+            });
+        }
 
-		public mouseDown(e: MouseEvent): void { }
-		public mouseUp(e: MouseEvent): void { }
+        public mouseDown(e:MouseEvent):void {
+        }
 
-		public draw(): void {
+        public mouseUp(e:MouseEvent):void {
+        }
+
+        public draw():void {
             this.applyFrame();
-		}
-	}
+        }
+    }
 
-	export class Desktop extends View {
-		constructor() {
-			super(RectMake(0, 0, window.innerWidth, window.innerHeight));
-			this.addCssClass(typeId(this));
-			document.getElementsByTagName('body').item(0).appendChild(this.element);
-		}
-	}
+    export class Desktop extends View {
+        constructor() {
+            super(RectMake(0, 0, window.innerWidth, window.innerHeight));
+            this.addCssClass(typeId(this));
+            document.getElementsByTagName('body').item(0).appendChild(this.element);
+        }
+    }
 
-	export class ViewDragManager {
-		view: View;
-		private offsetX;
-		private offsetY;
+    export class ViewDragManager {
+        view:View;
+        private offsetX;
+        private offsetY;
 
-		private mouseMoveHandler: any;
-		private mouseUpHandler: any;
+        private mouseMoveHandler:any;
+        private mouseUpHandler:any;
 
-		private handleMouseMove(e: MouseEvent) {
-			this.view.frame.origin = PointMake(e.x - this.offsetX, e.y - this.offsetY);
-			this.view.applyFrame();
-		}
-		private handleMouseRelease(e: MouseEvent) {
-			document.removeEventListener('mousemove', this.mouseMoveHandler, true);
-			document.removeEventListener('mouseup', this.mouseUpHandler, true);
-			this.view.isBeingDragged = false;
+        private handleMouseMove(e:MouseEvent) {
+            this.view.frame.origin = PointMake(e.x - this.offsetX, e.y - this.offsetY);
             this.view.applyFrame();
-		}
-		constructor(e: MouseEvent, view: View) {
-			this.view = view;
-			this.view.isBeingDragged = true;
-			this.offsetX = e.x - view.frame.origin.x;
-			this.offsetY = e.y - view.frame.origin.y;
+        }
 
-			this.mouseMoveHandler = (e: MouseEvent) => { this.handleMouseMove(e); };
-			this.mouseUpHandler = (e: MouseEvent) => { this.handleMouseRelease(e); };
-			document.addEventListener('mousemove', this.mouseMoveHandler, true);
-			document.addEventListener('mouseup', this.mouseUpHandler, true);
-		}
-	}
+        private handleMouseRelease(e:MouseEvent) {
+            document.removeEventListener('mousemove', this.mouseMoveHandler, true);
+            document.removeEventListener('mouseup', this.mouseUpHandler, true);
+            this.view.isBeingDragged = false;
+            this.view.applyFrame();
+        }
 
-	enum Resize {
-		North = 1,
-		East = 2,
-		South = 4,
-		West = 8
-	}
+        constructor(e:MouseEvent, view:View) {
+            this.view = view;
+            this.view.isBeingDragged = true;
+            this.offsetX = e.x - view.frame.origin.x;
+            this.offsetY = e.y - view.frame.origin.y;
 
-	export class ViewResizeManager {
-		private view: View;
-		private offsetX;
-		private offsetY;
-		private originalFrame: Rect;
-		private resizeDirectionMask: number;
-		private busy: boolean;
-		private initialMouseEvent: MouseEvent;
-		private mouseMoveHandler: any;
-		private mouseUpHandler: any;
+            this.mouseMoveHandler = (e:MouseEvent) => {
+                this.handleMouseMove(e);
+            };
+            this.mouseUpHandler = (e:MouseEvent) => {
+                this.handleMouseRelease(e);
+            };
+            document.addEventListener('mousemove', this.mouseMoveHandler, true);
+            document.addEventListener('mouseup', this.mouseUpHandler, true);
+        }
+    }
 
-		private constrain(val: number, min: number, max: number): number {
-			if (min && val < min)
-				return min;
-			if (max && val > max)
-				return max;
-			return val;
-		}
+    enum Resize {
+        North = 1,
+        East = 2,
+        South = 4,
+        West = 8
+    }
 
-		private handleMouseMove(e: MouseEvent) {
-			if (this.busy) return;
-			this.busy = true;
-			e.preventDefault();
-			var dir = this.resizeDirectionMask,
-				frame = this.originalFrame.copy(),
-				diffX = Math.round(this.initialMouseEvent.x - e.x),
-				diffY = Math.round(this.initialMouseEvent.y - e.y);
+    export class ViewResizeManager {
+        private view:View;
+        private offsetX;
+        private offsetY;
+        private originalFrame:Rect;
+        private resizeDirectionMask:number;
+        private busy:boolean;
+        private initialMouseEvent:MouseEvent;
+        private mouseMoveHandler:any;
+        private mouseUpHandler:any;
 
-			if ((dir & Resize.East) == Resize.East) {
-				frame.size.width = Math.round(this.originalFrame.size.width - diffX);
-			}
-			if ((dir & Resize.West) == Resize.West) {
-				frame.origin.x = Math.round(this.originalFrame.origin.x - diffX);
-				frame.size.width = Math.round(this.originalFrame.size.width + diffX);
-			}
-			if ((dir & Resize.South) == Resize.South) {
-				frame.size.height = Math.round(this.originalFrame.size.height - diffY);
-			}
-			if ((dir & Resize.North) == Resize.North) {
-				frame.origin.y = Math.round(this.originalFrame.origin.y - diffY);
-				frame.size.height = Math.round(this.originalFrame.size.height + diffY);
-			}
+        private constrain(val:number, min:number, max:number):number {
+            if (min && val < min)
+                return min;
+            if (max && val > max)
+                return max;
+            return val;
+        }
 
-			this.view.frame = frame;
-			this.busy = false;
-		}
+        private handleMouseMove(e:MouseEvent) {
+            if (this.busy) return;
+            this.busy = true;
+            e.preventDefault();
+            var dir = this.resizeDirectionMask,
+                frame = this.originalFrame.copy(),
+                diffX = Math.round(this.initialMouseEvent.x - e.x),
+                diffY = Math.round(this.initialMouseEvent.y - e.y);
 
-		private handleMouseRelease(e: MouseEvent) {
-			document.removeEventListener('mousemove', this.mouseMoveHandler, true);
-			document.removeEventListener('mouseup', this.mouseUpHandler, true);
-			this.view.isResizing = false;
-			this.view.isBeingDragged = false;
-			this.view.applyFrame();
-		}
+            if ((dir & Resize.East) == Resize.East) {
+                frame.size.width = Math.round(this.originalFrame.size.width - diffX);
+            }
+            if ((dir & Resize.West) == Resize.West) {
+                frame.origin.x = Math.round(this.originalFrame.origin.x - diffX);
+                frame.size.width = Math.round(this.originalFrame.size.width + diffX);
+            }
+            if ((dir & Resize.South) == Resize.South) {
+                frame.size.height = Math.round(this.originalFrame.size.height - diffY);
+            }
+            if ((dir & Resize.North) == Resize.North) {
+                frame.origin.y = Math.round(this.originalFrame.origin.y - diffY);
+                frame.size.height = Math.round(this.originalFrame.size.height + diffY);
+            }
 
-		constructor(e: MouseEvent, view: View, directionMask: number) {
-			this.busy = true;
-			this.initialMouseEvent = e;
-			this.view = view;
-			this.view.isResizing = true;
-			this.originalFrame = this.view.frame;
-			this.resizeDirectionMask = directionMask;
-			this.offsetX = e.offsetX;
-			this.offsetY = e.offsetY;
+            this.view.frame = frame;
+            this.busy = false;
+        }
 
-			this.mouseMoveHandler = (e: MouseEvent) => { this.handleMouseMove(e); };
-			this.mouseUpHandler = (e: MouseEvent) => { this.handleMouseRelease(e); };
-			document.addEventListener('mousemove', this.mouseMoveHandler, true);
-			document.addEventListener('mouseup', this.mouseUpHandler, true);
-			this.busy = false;
-		}
-	}
+        private handleMouseRelease(e:MouseEvent) {
+            document.removeEventListener('mousemove', this.mouseMoveHandler, true);
+            document.removeEventListener('mouseup', this.mouseUpHandler, true);
+            this.view.isResizing = false;
+            this.view.isBeingDragged = false;
+            this.view.applyFrame();
+        }
 
-	export class TitleBar extends View {
-		public get forWindow(): Window {
-			return <Window>this.parentView;
-		}
-	}
+        constructor(e:MouseEvent, view:View, directionMask:number) {
+            this.busy = true;
+            this.initialMouseEvent = e;
+            this.view = view;
+            this.view.isResizing = true;
+            this.originalFrame = this.view.frame;
+            this.resizeDirectionMask = directionMask;
+            this.offsetX = e.offsetX;
+            this.offsetY = e.offsetY;
 
-	export class WindowManager {
-        private _front: Window;
-		private _windows: Array<Window> = [];
-		public get windows(): Array<Window> {
-			return this._windows;
-		}
+            this.mouseMoveHandler = (e:MouseEvent) => {
+                this.handleMouseMove(e);
+            };
+            this.mouseUpHandler = (e:MouseEvent) => {
+                this.handleMouseRelease(e);
+            };
+            document.addEventListener('mousemove', this.mouseMoveHandler, true);
+            document.addEventListener('mouseup', this.mouseUpHandler, true);
+            this.busy = false;
+        }
+    }
 
-        public addWindow(window: Window) {
+    export class TitleBar extends View {
+        public get forWindow():Window {
+            return <Window>this.parentView;
+        }
+    }
+
+    export class WindowManager {
+        private _front:Window;
+        private _windows:Array<Window> = [];
+        public get windows():Array<Window> {
+            return this._windows;
+        }
+
+        public addWindow(window:Window) {
             this._windows.push(window);
         }
 
-		public orderFront(window: Window): void {
+        public orderFront(window:Window):void {
             var oldFront, newFront;
 
             if (window === this._front) return;
 
-			for (var ix = 0; ix < this._windows.length; ix++) {
-				if (this._windows[ix] === window) {
+            for (var ix = 0; ix < this._windows.length; ix++) {
+                if (this._windows[ix] === window) {
                     newFront = this._windows[ix];
                     continue;
-				}
+                }
                 else if (this._windows[ix] === this._front) {
                     oldFront = this._windows[ix];
                     continue;
-				}
-			}
+                }
+            }
             if (oldFront) {
                 oldFront.removeCssClass('front');
             }
@@ -761,8 +842,8 @@ module red {
             }
 
             this._front = window;
-		}
-	}
+        }
+    }
 
     export class ContentView extends View {
 
@@ -772,298 +853,425 @@ module red {
         }
     }
 
-	export enum WindowToolType {
-		Close,
-		Minimize,
-		Resize
-	}
-	export class WindowTool extends View {
-		constructor(rect: Rect, type: WindowToolType) {
-			super(rect);
-			this.addCssClass(WindowToolType[type]);
-			this.clipsContent = false;
-		}
-	}
+    export enum WindowToolType {
+        Close,
+        Minimize,
+        Resize
+    }
+    export class WindowTool extends View {
+        constructor(rect:Rect, type:WindowToolType) {
+            super(rect);
+            this.addCssClass(WindowToolType[type]);
+            this.clipsContent = false;
+        }
+    }
 
-	export class WindowSizeHandle extends View {
-		constructor(rect: Rect) {
-			super(rect);
-			// this.setBackgroundColor(colors.red);
-		}
-	}
+    export class WindowSizeHandle extends View {
+        constructor(rect:Rect) {
+            super(rect);
+            // this.setBackgroundColor(colors.red);
+        }
+    }
 
-	export class UserResizableView extends View {
+    export class UserResizableView extends View {
 
-		private _isHorizontallySizable: boolean;
-		public get isHorizontallySizable(): boolean {
-			return this._isHorizontallySizable;
-		}
-		public set isHorizontallySizable(v: boolean) {
-			this._isHorizontallySizable = v;
-		}
+        private _isHorizontallySizable:boolean;
+        public get isHorizontallySizable():boolean {
+            return this._isHorizontallySizable;
+        }
 
-		private _isVertictallySizable: boolean;
-		public get isVertictallySizable(): boolean {
-			return this._isVertictallySizable;
-		}
-		public set isVertictallySizable(v: boolean) {
-			this._isVertictallySizable = v;
-		}
+        public set isHorizontallySizable(v:boolean) {
+            this._isHorizontallySizable = v;
+        }
+
+        private _isVertictallySizable:boolean;
+        public get isVertictallySizable():boolean {
+            return this._isVertictallySizable;
+        }
+
+        public set isVertictallySizable(v:boolean) {
+            this._isVertictallySizable = v;
+        }
 
 
-		private _resizeBorderThickness: number;
-		public get resizeBorderThickness(): number {
-			return Math.round(this._resizeBorderThickness);
-		}
-		public set resizeBorderThickness(v: number) {
-			this._resizeBorderThickness = v;
-		}
+        private _resizeBorderThickness:number;
+        public get resizeBorderThickness():number {
+            return Math.round(this._resizeBorderThickness);
+        }
 
-		private _sizeHandleHorizontallyLeft: WindowSizeHandle;
-		private _sizeHandleHorizontallyRight: WindowSizeHandle;
-		private _sizeHandleVerticallyTop: WindowSizeHandle;
-		private _sizeHandleVerticallyallyBottom: WindowSizeHandle;
-		private _sizeHandleTopLeft: WindowSizeHandle;
-		private _sizeHandleTopRight: WindowSizeHandle;
-		private _sizeHandleBottomLeft: WindowSizeHandle;
-		private _sizeHandleBottomRight: WindowSizeHandle;
+        public set resizeBorderThickness(v:number) {
+            this._resizeBorderThickness = v;
+        }
 
-		constructor(aRect: Rect) {
-			super(aRect);
-			this._resizeBorderThickness = 6;
-			var thickness = this._resizeBorderThickness;
-			this._sizeHandleTopLeft = this.addSubview(new WindowSizeHandle(
-				RectMake(0, 0, thickness, thickness)));
-			this._sizeHandleTopLeft.setCursor('nw-resize');
+        private _sizeHandleHorizontallyLeft:WindowSizeHandle;
+        private _sizeHandleHorizontallyRight:WindowSizeHandle;
+        private _sizeHandleVerticallyTop:WindowSizeHandle;
+        private _sizeHandleVerticallyallyBottom:WindowSizeHandle;
+        private _sizeHandleTopLeft:WindowSizeHandle;
+        private _sizeHandleTopRight:WindowSizeHandle;
+        private _sizeHandleBottomLeft:WindowSizeHandle;
+        private _sizeHandleBottomRight:WindowSizeHandle;
 
-			this._sizeHandleTopRight = this.addSubview(new WindowSizeHandle(
-				RectMake(aRect.size.width - thickness, 0, thickness, thickness)));
-			this._sizeHandleTopRight.setCursor('ne-resize');
+        constructor(aRect:Rect) {
+            super(aRect);
+            this._resizeBorderThickness = 4;
+            var thickness = this._resizeBorderThickness;
+            this._sizeHandleTopLeft = this.addSubview(new WindowSizeHandle(
+                RectMake(0, 0, thickness, thickness)));
+            this._sizeHandleTopLeft.setCursor('nw-resize');
 
-			this._sizeHandleBottomLeft = this.addSubview(new WindowSizeHandle(
-				RectMake(0, aRect.size.height - thickness, thickness, thickness)));
-			this._sizeHandleBottomLeft.setCursor('sw-resize');
+            this._sizeHandleTopRight = this.addSubview(new WindowSizeHandle(
+                RectMake(aRect.size.width - thickness, 0, thickness, thickness)));
+            this._sizeHandleTopRight.setCursor('ne-resize');
 
-			this._sizeHandleBottomRight = this.addSubview(new WindowSizeHandle(
-				RectMake(aRect.size.width - thickness, aRect.size.height - thickness, thickness, thickness)));
-			this._sizeHandleBottomRight.setCursor('se-resize');
+            this._sizeHandleBottomLeft = this.addSubview(new WindowSizeHandle(
+                RectMake(0, aRect.size.height - thickness, thickness, thickness)));
+            this._sizeHandleBottomLeft.setCursor('sw-resize');
 
-			this._sizeHandleHorizontallyLeft = this.addSubview(new WindowSizeHandle(
-				RectMake(0, thickness, thickness, aRect.size.height - (2 * thickness))));
-			this._sizeHandleHorizontallyLeft.setCursor('w-resize');
+            this._sizeHandleBottomRight = this.addSubview(new WindowSizeHandle(
+                RectMake(aRect.size.width - thickness, aRect.size.height - thickness, thickness, thickness)));
+            this._sizeHandleBottomRight.setCursor('se-resize');
 
-			this._sizeHandleHorizontallyRight = this.addSubview(new WindowSizeHandle(
-				RectMake(aRect.size.width - thickness, thickness, thickness, aRect.size.height - (2 * thickness))));
-			this._sizeHandleHorizontallyRight.setCursor('e-resize');
+            this._sizeHandleHorizontallyLeft = this.addSubview(new WindowSizeHandle(
+                RectMake(0, thickness, thickness, aRect.size.height - (2 * thickness))));
+            this._sizeHandleHorizontallyLeft.setCursor('w-resize');
 
-			this._sizeHandleVerticallyTop = this.addSubview(new WindowSizeHandle(
-				RectMake(thickness, 0, aRect.size.width - (2 * thickness), thickness)));
-			this._sizeHandleVerticallyTop.setCursor('n-resize');
+            this._sizeHandleHorizontallyRight = this.addSubview(new WindowSizeHandle(
+                RectMake(aRect.size.width - thickness, thickness, thickness, aRect.size.height - (2 * thickness))));
+            this._sizeHandleHorizontallyRight.setCursor('e-resize');
 
-			this._sizeHandleVerticallyallyBottom = this.addSubview(new WindowSizeHandle(
-				RectMake(thickness, aRect.size.height - thickness, aRect.size.width - (2 * thickness), thickness)));
-			this._sizeHandleVerticallyallyBottom.setCursor('s-resize');
-			
-			// this.applyFrame();
-			
-			var theView = this;
-			this._sizeHandleHorizontallyRight.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isHorizontallySizable) {
-					new ViewResizeManager(e, theView, Resize.East);
-				}
-			};
-			this._sizeHandleHorizontallyLeft.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isHorizontallySizable) {
-					new ViewResizeManager(e, theView, Resize.West);
-				}
-			};
-			this._sizeHandleVerticallyTop.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isVertictallySizable) {
-					new ViewResizeManager(e, theView, Resize.North);
-				}
-			};
-			this._sizeHandleVerticallyallyBottom.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isVertictallySizable) {
-					new ViewResizeManager(e, theView, Resize.South);
-				}
-			};
-			
-			this._sizeHandleTopLeft.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
-					new ViewResizeManager(e, theView, Resize.North | Resize.West);
-				}
-			};
-			this._sizeHandleTopRight.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
-					new ViewResizeManager(e, theView, Resize.North | Resize.East);
-				}
-			};
-			this._sizeHandleBottomLeft.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
-					new ViewResizeManager(e, theView, Resize.South | Resize.West);
-				}
-			};
-			this._sizeHandleBottomRight.mouseDown = (e: MouseEvent) => {
-				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
-					new ViewResizeManager(e, theView, Resize.South | Resize.East);
-				}
-			};
-			
+            this._sizeHandleVerticallyTop = this.addSubview(new WindowSizeHandle(
+                RectMake(thickness, 0, aRect.size.width - (2 * thickness), thickness)));
+            this._sizeHandleVerticallyTop.setCursor('n-resize');
+
+            this._sizeHandleVerticallyallyBottom = this.addSubview(new WindowSizeHandle(
+                RectMake(thickness, aRect.size.height - thickness, aRect.size.width - (2 * thickness), thickness)));
+            this._sizeHandleVerticallyallyBottom.setCursor('s-resize');
+
+            // this.applyFrame();
+
+            var theView = this;
+            this._sizeHandleHorizontallyRight.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isHorizontallySizable) {
+                    new ViewResizeManager(e, theView, Resize.East);
+                }
+            };
+            this._sizeHandleHorizontallyLeft.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isHorizontallySizable) {
+                    new ViewResizeManager(e, theView, Resize.West);
+                }
+            };
+            this._sizeHandleVerticallyTop.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isVertictallySizable) {
+                    new ViewResizeManager(e, theView, Resize.North);
+                }
+            };
+            this._sizeHandleVerticallyallyBottom.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isVertictallySizable) {
+                    new ViewResizeManager(e, theView, Resize.South);
+                }
+            };
+
+            this._sizeHandleTopLeft.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+                    new ViewResizeManager(e, theView, Resize.North | Resize.West);
+                }
+            };
+            this._sizeHandleTopRight.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+                    new ViewResizeManager(e, theView, Resize.North | Resize.East);
+                }
+            };
+            this._sizeHandleBottomLeft.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+                    new ViewResizeManager(e, theView, Resize.South | Resize.West);
+                }
+            };
+            this._sizeHandleBottomRight.mouseDown = (e:MouseEvent) => {
+                if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
+                    new ViewResizeManager(e, theView, Resize.South | Resize.East);
+                }
+            };
+
             this.isHorizontallySizable = true;
-            this.isVertictallySizable = true;			
-		}
+            this.isVertictallySizable = true;
+        }
 
-		public applyFrame() {
-			var thickness = this.resizeBorderThickness;
-			this._sizeHandleTopLeft.frame = RectMake(0, 0, thickness, thickness);
-			this._sizeHandleTopRight.frame = RectMake(this.frame.size.width - thickness, 0, thickness, thickness);
-			this._sizeHandleBottomLeft.frame = RectMake(0, this.frame.size.height - thickness, thickness, thickness);
-			this._sizeHandleBottomRight.frame = RectMake(this.frame.size.width - thickness, this.frame.size.height - thickness, thickness, thickness);
-			this._sizeHandleHorizontallyLeft.frame = RectMake(0, thickness, thickness, this.frame.size.height - (2 * thickness));
-			this._sizeHandleHorizontallyRight.frame = RectMake(this.frame.size.width - thickness, thickness, thickness, this.frame.size.height - (2 * thickness));
-			this._sizeHandleVerticallyTop.frame = RectMake(thickness, 0, this.frame.size.width - (2 * thickness), thickness);
-			this._sizeHandleVerticallyallyBottom.frame = RectMake(thickness, this.frame.size.height - thickness, this.frame.size.width - (2 * thickness), thickness);
+        public applyFrame() {
+            var thickness = this.resizeBorderThickness;
+            this._sizeHandleTopLeft.frame = RectMake(0, 0, thickness, thickness);
+            this._sizeHandleTopRight.frame = RectMake(this.frame.size.width - thickness, 0, thickness, thickness);
+            this._sizeHandleBottomLeft.frame = RectMake(0, this.frame.size.height - thickness, thickness, thickness);
+            this._sizeHandleBottomRight.frame = RectMake(this.frame.size.width - thickness, this.frame.size.height - thickness, thickness, thickness);
+            this._sizeHandleHorizontallyLeft.frame = RectMake(0, thickness, thickness, this.frame.size.height - (2 * thickness));
+            this._sizeHandleHorizontallyRight.frame = RectMake(this.frame.size.width - thickness, thickness, thickness, this.frame.size.height - (2 * thickness));
+            this._sizeHandleVerticallyTop.frame = RectMake(thickness, 0, this.frame.size.width - (2 * thickness), thickness);
+            this._sizeHandleVerticallyallyBottom.frame = RectMake(thickness, this.frame.size.height - thickness, this.frame.size.width - (2 * thickness), thickness);
             super.applyFrame();
-		}
-	}
+        }
+    }
 
-	export class UserDraggableView extends UserResizableView {
-		
-		private _isDraggable : boolean;
-		public get isDraggable() : boolean {
-			return this._isDraggable && this._dragHandleView != null;
-		}
-		public set isDraggable(v : boolean) {
-			this._isDraggable = v;
-		}
-		
-		private _dragHandleView : View;
-		public get dragHandleView() : View {
-			return this._dragHandleView || this;
-		}
-		public set dragHandleView(v : View) {
-			if (v != this._dragHandleView) {
-				this._dragHandleView = v;
-				
-				if (this.isDraggable)
-					this.dragHandleView.mouseDown = (e:MouseEvent) => {
-						new ViewDragManager(e, this);
-					};
-				else
-					this.dragHandleView.mouseDown = (e:MouseEvent) => {};
-			}
-		}
-		
-		constructor(aRect:Rect) {
-			super(aRect);
-		}
-	}
+    export class UserDraggableView extends UserResizableView {
 
-	export class Window extends UserDraggableView {
-		private _titleBar: View;
-		private _contentView: View;
-        public get contentView() : View {
+        private _isDraggable:boolean;
+        public get isDraggable():boolean {
+            return this._isDraggable && this._dragHandleView != null;
+        }
+
+        public set isDraggable(v:boolean) {
+            this._isDraggable = v;
+        }
+
+        private _dragHandleView:View;
+        public get dragHandleView():View {
+            return this._dragHandleView || this;
+        }
+
+        public set dragHandleView(v:View) {
+            if (v != this._dragHandleView) {
+                this._dragHandleView = v;
+
+                if (this.isDraggable)
+                    this.dragHandleView.mouseDown = (e:MouseEvent) => {
+                        new ViewDragManager(e, this);
+                    };
+                else
+                    this.dragHandleView.mouseDown = (e:MouseEvent) => {
+                    };
+            }
+        }
+
+        constructor(aRect:Rect) {
+            super(aRect);
+        }
+    }
+
+    export enum WindowCloseReason {
+        UserAction
+    }
+    export enum WindowMinimizeReason {
+        UserAction
+    }
+
+    export class Window extends UserDraggableView {
+        private _titleBar:View;
+        private _contentView:View;
+        public get contentView():View {
             return this._contentView;
         }
-		private _windowManager: WindowManager;
-        private _canBecomeKey: boolean;
 
-		private _tools: View;
-		private _closeTool: WindowTool;
-		private _resizeTool: WindowTool;
-		private _minimizeTool: WindowTool;
+        private _windowManager:WindowManager;
+        private _canBecomeKey:boolean;
 
-		public orderFront(): void {
-			this._windowManager.orderFront(this);
-		}
+        private _tools:View;
+        private _closeTool:WindowTool;
+        private _resizeTool:WindowTool;
+        private _minimizeTool:WindowTool;
 
-		constructor(aRect: Rect = null) {
-			super(aRect = aRect || RectMake(0, 0, 329, 200));
+        private unminimizedElement:HTMLElement;
+
+        public orderFront():void {
+            this._windowManager.orderFront(this);
+        }
+
+        constructor(aRect:Rect = null) {
+            super(aRect = aRect || RectMake(0, 0, 329, 200));
+            this.addCssClass('Window');
             this.minimumSize = SizeMake(64, 64);
-			this.clipsContent = false;
-			this._canBecomeKey = true;
-			this._windowManager = application.windowManager;
+            this.clipsContent = false;
+            this._canBecomeKey = true;
+            this._windowManager = application.windowManager;
             this._windowManager.windows.push(this);
 
-			this._titleBar = new TitleBar(RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26));
-			this.isDraggable = true;
-			this.dragHandleView = this._titleBar;
+            this._titleBar = new TitleBar(RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26));
+            this.isDraggable = true;
+            this.dragHandleView = this._titleBar;
 
-			this.addSubview(this._titleBar);
-			var m = this.resizeBorderThickness;
-			this._contentView = this.addSubview(new ContentView(
-				RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m)));
+            this.addSubview(this._titleBar);
+            var m = this.resizeBorderThickness;
+            this._contentView = this.addSubview(new ContentView(
+                RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m)));
 
-			this.allowDragAndDrop = true;
-			this.applyFrame();
+            this.allowDragAndDrop = true;
+            this.applyFrame();
 
-			this._tools = this._titleBar.addSubview(new View(RectMake(2, 2, 80, 20)));
-			this._tools.addCssClass('WindowTools');
+            this._tools = this._titleBar.addSubview(new View(RectMake(2, 2, 80, 20)));
+            this._tools.addCssClass('WindowTools');
 
-			var y = 4, s = 12, o = 8;
-			this._closeTool = this._tools.addSubview(new WindowTool(RectMake(o, y, s, s), WindowToolType.Close));
-			this._minimizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (2 * s), y, s, s), WindowToolType.Minimize));
-			this._resizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (4 * s), y, s, s), WindowToolType.Resize));
+            var y = 4, s = 12, o = 8;
+            this._closeTool = this._tools.addSubview(new WindowTool(RectMake(o, y, s, s), WindowToolType.Close));
+            this._minimizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (2 * s), y, s, s), WindowToolType.Minimize));
+            this._resizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (4 * s), y, s, s), WindowToolType.Resize));
 
+            var me = this;
+            this._closeTool.mouseUp = () => {
+                me.close(WindowCloseReason.UserAction)
+            };
+            this._minimizeTool.mouseUp = () => {
+                me.minimize(WindowMinimizeReason.UserAction)
+            };
 
-            var tw= aRect.size.width / 5, th= aRect.size.height / 5,
-                testView = new View(RectMake(tw, th, tw, th));
-                testView.setBackgroundColor(colors.green);
-                testView.autoresizingMask = Autoresize.LockedLeft | Autoresize.LockedRight | Autoresize.LockedBottom;
+            this.setupWindow();
 
-            this.contentView.addSubview(testView);
-		}
+            this.unminimizedElement = this.element;
+        }
 
-		public applyFrame(): void {
-			super.applyFrame();
-			this._titleBar.frame = RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26);
-			var m = this.resizeBorderThickness;
-			this._contentView.frame = RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m);
-		}
-		public mouseDown(e: MouseEvent): void {
-			this.orderFront();
-			
-		}
-		public mouseUp(e: MouseEvent): void {
+        public close(reason:WindowCloseReason = WindowCloseReason.UserAction):void {
+            if (this.windowShouldClose(reason)) {
+                this.windowWillClose();
+                this.parentView.removeSubview(this);
+                this.windowDidClose();
+            }
+        }
 
-		}
-	}
+        public windowShouldClose(reason:WindowCloseReason):boolean {
+            return true;
+        }
 
+        public windowWillClose() {
+        }
 
-	export interface IApplicationDelegate {
-		applicationDidFinishLaunching?: Function
-	}
+        public windowDidClose() {
+        }
 
-	export class Application {
-		private _windowManager: WindowManager;
-		public get windowManager(): WindowManager {
-			return this._windowManager;
-		}
+        public minimize(reason:WindowMinimizeReason = WindowMinimizeReason.UserAction):void {
+            if (this.windowShouldMinimize(reason)) {
+                this.windowWillMinimize();
+                //this.parentView.removeSubview(this);
+                this.windowDidMinimize();
+            }
+        }
 
-		private _delegate: IApplicationDelegate;
-		public set delegate(delegate: IApplicationDelegate) {
-			this._delegate = delegate;
-		}
-		private _desktop: Desktop;
+        public windowShouldMinimize(reason:WindowMinimizeReason):boolean {
+            return true;
+        }
 
-		public get desktop(): Desktop {
-			return this._desktop;
-		}
+        public windowWillMinimize() {
+        }
 
-		constructor(delegate: IApplicationDelegate = null) {
-			this._delegate = delegate;
-			this._windowManager = new WindowManager();
-		}
-		public initialize(): void {
-			this._desktop = new Desktop();
-		}
-		public run(): void {
-			this.initialize();
-			if (this._delegate && this._delegate['applicationDidFinishLaunching']) {
-				this._delegate.applicationDidFinishLaunching(this);
-			}
-		}
-	}
+        public windowDidMinimize() {
+        }
 
-	export var application = new Application();
+        public unminimize(reason:WindowMinimizeReason = WindowMinimizeReason.UserAction):void {
+            if (this.windowShouldUnMinimize(reason)) {
+                this.windowWillUnMinimize();
+                //this.parentView.removeSubview(this);
+                this.windowDidUnMinimize();
+            }
+        }
+
+        public windowShouldUnMinimize(reason:WindowMinimizeReason):boolean {
+            return true;
+        }
+
+        public windowWillUnMinimize() {
+        }
+
+        public windowDidUnMinimize() {
+        }
+
+        public setupWindow():void {
+
+        }
+
+        public applyFrame():void {
+            super.applyFrame();
+            this._titleBar.frame = RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26);
+            var m = this.resizeBorderThickness;
+            this._contentView.frame = RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m);
+        }
+
+        public mouseDown(e:MouseEvent):void {
+            this.orderFront();
+
+        }
+
+        public mouseUp(e:MouseEvent):void {
+
+        }
+    }
+
+    export class AboutWindow extends Window {
+        constructor() {
+            super(RectMake(0, 0, 380, 300));
+        }
+
+        public setupWindow():void {
+            var margin = 2, logoSize = 128;
+            this.minimumSize = SizeMake(200, 200);
+            this.maximumSize = SizeMake(800, 600);
+            var logo = this.contentView.addSubview(new View(RectMake(margin, margin, logoSize, logoSize)));
+            logo.addCssClass('Logo');
+            logo.addCssClass('theredhead');
+            logo.autoresizingMask = Autoresize.LockedLeft | Autoresize.LockedTop;
+
+            var about = this.contentView.addSubview(new View(RectMake(
+                (2 * margin) + logo.frame.size.width, margin,
+                this.contentView.frame.size.width - (3 * margin) - logo.frame.size.width,
+                this.contentView.frame.size.height - (2 * margin)
+            )));
+
+            about.autoresizingMask = Autoresize.LockedRight | Autoresize.LockedTop | Autoresize.LockedBottom;
+            about.element.style.padding = '0 8px';
+            about.element.innerHTML =
+                '<p>This software is built with TypedUI, an easy to use typescript frontend development framework built with no external dependencies, intended for desktop replacement web applications.</p>';
+        }
+    }
+
+    export interface IApplicationDelegate {
+        applicationDidFinishLaunching?: Function
+    }
+
+    export class Application {
+        private _windowManager:WindowManager;
+        public get windowManager():WindowManager {
+            return this._windowManager;
+        }
+
+        private _delegate:IApplicationDelegate;
+        public set delegate(delegate:IApplicationDelegate) {
+            this._delegate = delegate;
+        }
+
+        private _desktop:Desktop;
+
+        public get desktop():Desktop {
+            return this._desktop;
+        }
+
+        constructor(delegate:IApplicationDelegate = null) {
+            this._delegate = delegate;
+            this._windowManager = new WindowManager();
+        }
+
+        public initialize():void {
+            this._desktop = new Desktop();
+            this._desktop.element.addEventListener('dblclick', (e:MouseEvent) => {
+                if (e.metaKey) {
+                    e.preventDefault();
+                    this.about();
+                }
+            }, true);
+        }
+
+        public run():void {
+            this.initialize();
+            if (this._delegate && this._delegate['applicationDidFinishLaunching']) {
+                this._delegate.applicationDidFinishLaunching(this);
+            }
+        }
+
+        private aboutWindow:AboutWindow;
+
+        public about():void {
+            if (this.aboutWindow == null) {
+                this.aboutWindow = new AboutWindow();
+            }
+            this.desktop.addSubview(this.aboutWindow);
+            this.aboutWindow.center();
+            this.aboutWindow.visible = true;
+        }
+    }
+
+    export var application = new Application();
 }
