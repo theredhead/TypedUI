@@ -399,15 +399,15 @@ module red {
 		white: new Color(255, 255, 255)
 	};
 
-    function resizeProportionally(r:Rect, oldContainer:Rect, newContainer:Rect) : Rect {
-        //console.log('resizeProportionally', arguments);
-        var factor = 100, // oldContainer.size.width * newContainer.size.width
-            factorX = ((factor / oldContainer.size.width) * (newContainer.size.width)) / factor,
-            factorY = ((factor / oldContainer.size.height) * (newContainer.size.height)) / factor,
-            origin = PointMake(r.origin.x * factorX, r.origin.y * factorY),
-            size = SizeMake(r.size.width * factorX, r.size.height * factorY);
-
-        return RectMake(origin.x, origin.y, size.width, size.height);
+    function resizeProportionally(r:Rect, oldSize:Size, newSize:Size) : Rect {
+        var fn = (lengthA, lengthB, distanceA) => {
+            return (distanceA * lengthB) / lengthA;
+        };
+        var x = fn(oldSize.width, newSize.width, r.origin.x),
+            y = fn(oldSize.height, newSize.height, r.origin.y),
+            w = fn(oldSize.width, newSize.width, r.size.width),
+            h = fn(oldSize.height, newSize.height, r.size.height);
+        return RectMake(x, y, w, h);
     }
 
 	enum Autoresize
@@ -499,20 +499,20 @@ module red {
                     var oldRect = RectMake(0, 0, oldSize.width, oldSize.height);
                     for (var ix = 0; ix < this._subViews.length; ix ++) {
                         var sub = this._subViews[ix],
-                            rect = resizeProportionally(sub.frame, oldRect, this.frame);
+                            rect = resizeProportionally(sub.frame, oldSize, newSize);
 
-                        if ((sub.autoresizingMask & Autoresize.LockedLeft) == Autoresize.LockedLeft) {
-                            rect.origin.x = sub.frame.origin.x;
-                        }
-                        if ((sub.autoresizingMask & Autoresize.LockedTop)  == Autoresize.LockedTop) {
-                            rect.origin.y = sub.frame.origin.y;
-                        }
-                        if ((sub.autoresizingMask & Autoresize.LockedRight) == Autoresize.LockedRight) {
-                            rect.size.width = newSize.width - (sub.frame.size.width + sub.frame.origin.x);
-                        }
-                        if ((sub.autoresizingMask & Autoresize.LockedBottom) == Autoresize.LockedBottom) {
-                            rect.size.height = newSize.height- (sub.frame.size.height + sub.frame.origin.y);
-                        }
+                        //if ((sub.autoresizingMask & Autoresize.LockedLeft) == Autoresize.LockedLeft) {
+                        //    rect.origin.x = sub.frame.origin.x;
+                        //}
+                        //if ((sub.autoresizingMask & Autoresize.LockedTop)  == Autoresize.LockedTop) {
+                        //    rect.origin.y = sub.frame.origin.y;
+                        //}
+                        //if ((sub.autoresizingMask & Autoresize.LockedRight) == Autoresize.LockedRight) {
+                        //    rect.size.width = oldSize.width - (sub.frame.size.width + sub.frame.origin.x);
+                        //}
+                        //if ((sub.autoresizingMask & Autoresize.LockedBottom) == Autoresize.LockedBottom) {
+                        //    rect.size.height = oldSize.height - (sub.frame.size.height + sub.frame.origin.y);
+                        //}
 
 
                         sub.frame = rect;
@@ -522,12 +522,11 @@ module red {
 		}
 
 		public applyFrame(): void {
-
+            super.applyFrame();
             for (var ix = 0; ix < this._subViews.length; ix++) {
 				var view = this._subViews[ix];
                 view.applyFrame();
             }
-            super.applyFrame();
 		}
 
 		private _isResizing: boolean;
@@ -623,6 +622,7 @@ module red {
 			document.removeEventListener('mousemove', this.mouseMoveHandler, true);
 			document.removeEventListener('mouseup', this.mouseUpHandler, true);
 			this.view.isBeingDragged = false;
+            this.view.applyFrame();
 		}
 		constructor(e: MouseEvent, view: View) {
 			this.view = view;
@@ -656,9 +656,9 @@ module red {
 		private mouseUpHandler: any;
 
 		private constrain(val: number, min: number, max: number): number {
-			if (val < min || val)
+			if (min && val < min)
 				return min;
-			if (val > max || val)
+			if (max && val > max)
 				return max;
 			return val;
 		}
@@ -764,7 +764,13 @@ module red {
 		}
 	}
 
-    export class ContentView extends View { }
+    export class ContentView extends View {
+
+        constructor(aRect:Rect) {
+            super(aRect);
+            this.autoresizesSubviews = true;
+        }
+    }
 
 	export enum WindowToolType {
 		Close,
@@ -887,19 +893,16 @@ module red {
 					new ViewResizeManager(e, theView, Resize.North | Resize.West);
 				}
 			};
-
 			this._sizeHandleTopRight.mouseDown = (e: MouseEvent) => {
 				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
 					new ViewResizeManager(e, theView, Resize.North | Resize.East);
 				}
 			};
-
 			this._sizeHandleBottomLeft.mouseDown = (e: MouseEvent) => {
 				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
 					new ViewResizeManager(e, theView, Resize.South | Resize.West);
 				}
 			};
-
 			this._sizeHandleBottomRight.mouseDown = (e: MouseEvent) => {
 				if (!theView.isResizing && theView.isVertictallySizable && theView.isHorizontallySizable) {
 					new ViewResizeManager(e, theView, Resize.South | Resize.East);
@@ -911,7 +914,6 @@ module red {
 		}
 
 		public applyFrame() {
-			super.applyFrame();
 			var thickness = this.resizeBorderThickness;
 			this._sizeHandleTopLeft.frame = RectMake(0, 0, thickness, thickness);
 			this._sizeHandleTopRight.frame = RectMake(this.frame.size.width - thickness, 0, thickness, thickness);
@@ -921,6 +923,7 @@ module red {
 			this._sizeHandleHorizontallyRight.frame = RectMake(this.frame.size.width - thickness, thickness, thickness, this.frame.size.height - (2 * thickness));
 			this._sizeHandleVerticallyTop.frame = RectMake(thickness, 0, this.frame.size.width - (2 * thickness), thickness);
 			this._sizeHandleVerticallyallyBottom.frame = RectMake(thickness, this.frame.size.height - thickness, this.frame.size.width - (2 * thickness), thickness);
+            super.applyFrame();
 		}
 	}
 
@@ -990,7 +993,6 @@ module red {
 			var m = this.resizeBorderThickness;
 			this._contentView = this.addSubview(new ContentView(
 				RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m)));
-            this._contentView.autoresizesSubviews = true;
 
 			this.allowDragAndDrop = true;
 			this.applyFrame();

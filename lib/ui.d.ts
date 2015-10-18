@@ -181,6 +181,7 @@ declare module red {
         public orderFront(window: Window): void;
     }
     class ContentView extends View {
+        constructor(aRect: Rect);
     }
     enum WindowToolType {
         Close = 0,
