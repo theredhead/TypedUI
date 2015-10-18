@@ -324,3 +324,19 @@ declare module red {
     }
     var application: any;
 }
+declare module tests {
+    class TestController {
+        private _name;
+        public name : string;
+        private _window;
+        public window : red.Window;
+        public showWindow(): void;
+        constructor(name: string, window: any);
+    }
+    class TestsController {
+        private _window;
+        private _tests;
+        constructor(tests: TestController[]);
+    }
+    var tests: any;
+}

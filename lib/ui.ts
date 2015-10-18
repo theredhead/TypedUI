@@ -4,7 +4,7 @@
 module red {
     export var settings = {
         debug: true,
-        displayRectInfo: true
+        displayRectInfo: false
     };
 
     export function typeId(anObject:Object):string {
@@ -335,6 +335,7 @@ module red {
             this.addCssClass(typeId(this));
             this._frame = frame;
             this._element = document.createElement(this.tagName);
+            //this.applyFrame();
         }
 
         public applyFrame():void {
@@ -461,7 +462,7 @@ module red {
         return RectMake(x, y, w, h);
     }
 
-    enum Autoresize
+    export enum AutoresizingMask
     {
         LockedTop = 1,
         LockedLeft = 2,
@@ -559,17 +560,17 @@ module red {
                             frame = sub.frame.copy(),
                             rect = resizeProportionally(sub.frame, oldSize, newSize);
 
-                        if ((sub.autoresizingMask & Autoresize.LockedLeft) == Autoresize.LockedLeft) {
+                        if ((sub.autoresizingMask & AutoresizingMask.LockedLeft) == AutoresizingMask.LockedLeft) {
                             rect.origin.x = sub.frame.origin.x;
                         }
-                        if ((sub.autoresizingMask & Autoresize.LockedTop) == Autoresize.LockedTop) {
+                        if ((sub.autoresizingMask & AutoresizingMask.LockedTop) == AutoresizingMask.LockedTop) {
                             rect.origin.y = sub.frame.origin.y;
                         }
-                        if ((sub.autoresizingMask & Autoresize.LockedRight) == Autoresize.LockedRight) {
+                        if ((sub.autoresizingMask & AutoresizingMask.LockedRight) == AutoresizingMask.LockedRight) {
                             var distanceFromOldRight = oldSize.width - (frame.size.width + frame.origin.x);
                             rect.size.width = newSize.width - rect.origin.x - distanceFromOldRight;
                         }
-                        if ((sub.autoresizingMask & Autoresize.LockedBottom) == Autoresize.LockedBottom) {
+                        if ((sub.autoresizingMask & AutoresizingMask.LockedBottom) == AutoresizingMask.LockedBottom) {
                             var distanceFromOldBottom = oldSize.height - (frame.size.height + frame.origin.y);
                             rect.size.height = newSize.height - rect.origin.y - distanceFromOldBottom;
                         }
@@ -624,13 +625,14 @@ module red {
             this._subViews.push(aView);
             aView._parentView = this;
             this.element.appendChild(aView.element);
-            aView.draw();
             return aView;
         }
 
         public removeSubview(aView:View):View {
             this._subViews.splice(this._subViews.indexOf(aView));
-            this.element.removeChild(aView.element);
+            if (this.element.contains(aView.element)) {
+                this.element.removeChild(aView.element);
+            }
             return aView;
         }
 
@@ -666,12 +668,14 @@ module red {
 
         public draw():void {
             this.applyFrame();
+            //this.applyFrame();
         }
     }
 
     export class Desktop extends View {
         constructor() {
             super(RectMake(0, 0, window.innerWidth, window.innerHeight));
+
             this.addCssClass(typeId(this));
             document.getElementsByTagName('body').item(0).appendChild(this.element);
         }
@@ -799,26 +803,100 @@ module red {
     }
 
     export class TitleBar extends View {
+
+        private _tools:View;
+        private _closeTool:WindowTool;
+        private _resizeTool:WindowTool;
+        private _minimizeTool:WindowTool;
+
+        public get closeTool():red.WindowTool {
+            return this._closeTool;
+        }
+        public get minimizeTool():red.WindowTool {
+            return this._minimizeTool;
+        }
+        public get resizeTool():red.WindowTool {
+            return this._resizeTool;
+        }
+
+        public get title():string {
+            return this._titleView.element.innerText;
+        }
+        public set title(value:string) {
+            this._titleView.element.innerText = value;
+            this.applyFrame();
+        }
+        private _titleView:View;
+
         public get forWindow():Window {
             return <Window>this.parentView;
+        }
+        constructor(aRect:Rect) {
+            super(aRect);
+            this._titleView = new View(this.makeTitleViewRect());
+            this._titleView.element.style.overflow = 'ellipsis';
+            this.addSubview(this._titleView);
+
+            this._tools = this.addSubview(new View(RectMake(2, 2, 80, 20)));
+            this._tools.addCssClass('WindowTools');
+            this._tools.applyFrame();
+
+            var y = 4, s = 12, o = 8;
+            this._closeTool = this._tools.addSubview(new WindowTool(RectMake(o, y, s, s), WindowToolType.Close));
+            this._minimizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (2 * s), y, s, s), WindowToolType.Minimize));
+            this._resizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (4 * s), y, s, s), WindowToolType.Resize));
+            this.applyFrame();
+        }
+        applyFrame() : void {
+            this._titleView.frame = this.makeTitleViewRect();
+            this._titleView.applyFrame();
+            super.applyFrame();
+        }
+
+        public makeTitleViewRect() : Rect {
+            return RectMake(80, 4, this.frame.size.width - 80, this.frame.size.height-8);
         }
     }
 
     export class WindowManager {
         private _front:Window;
+        private _container;View;
         private _windows:Array<Window> = [];
         public get windows():Array<Window> {
             return this._windows;
         }
 
         public addWindow(window:Window) {
+            if (window == null) {
+                throw new Error('Window cannot be null.');
+            }
+            if (window.element == null) {
+                throw new Error('Window hasn\'t created its element yet.');
+            }
             this._windows.push(window);
+
+            if (window.element.parentNode == null) {
+                this._container.element.appendChild(window.element);
+            } else {
+                window.element.parentNode.removeChild(window.element);
+                this._container.element.appendChild(window.element);
+            }
         }
 
         public orderFront(window:Window):void {
             var oldFront, newFront;
 
-            if (window === this._front) return;
+            if (window == null) {
+                throw new Error('Cannot add null window');
+            }
+            if (window.element == null) {
+                throw new Error('Cannot add window that hasn\'t created its element yet.');
+            }
+            if (window.element.parentNode == null) {
+                this._container.appendChild(window.element);
+            }
+            window.visible = true;
+            //if (window === this._front) return;
 
             for (var ix = 0; ix < this._windows.length; ix++) {
                 if (this._windows[ix] === window) {
@@ -835,13 +913,18 @@ module red {
             }
             if (newFront) {
                 var container = newFront.element.parentNode;
-                container.removeChild(newFront.element);
-                container.appendChild(newFront.element);
-
+                if (container) {
+                    container.removeChild(newFront.element);
+                    container.appendChild(newFront.element);
+                }
                 newFront.addCssClass('front');
             }
 
             this._front = window;
+        }
+
+        constructor(container:View) {
+            this._container = container;
         }
     }
 
@@ -1049,12 +1132,23 @@ module red {
     export enum WindowCloseReason {
         UserAction
     }
+
     export enum WindowMinimizeReason {
         UserAction
     }
 
     export class Window extends UserDraggableView {
-        private _titleBar:View;
+        public get title():string {
+            return this._titleBar.title;
+        }
+
+        public set title(value:string) {
+            this._titleBar.title = value;
+        }
+
+        private _title:string;
+
+        private _titleBar:TitleBar;
         private _contentView:View;
         public get contentView():View {
             return this._contentView;
@@ -1063,7 +1157,6 @@ module red {
         private _windowManager:WindowManager;
         private _canBecomeKey:boolean;
 
-        private _tools:View;
         private _closeTool:WindowTool;
         private _resizeTool:WindowTool;
         private _minimizeTool:WindowTool;
@@ -1093,27 +1186,18 @@ module red {
                 RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m)));
 
             this.allowDragAndDrop = true;
-            this.applyFrame();
-
-            this._tools = this._titleBar.addSubview(new View(RectMake(2, 2, 80, 20)));
-            this._tools.addCssClass('WindowTools');
-
-            var y = 4, s = 12, o = 8;
-            this._closeTool = this._tools.addSubview(new WindowTool(RectMake(o, y, s, s), WindowToolType.Close));
-            this._minimizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (2 * s), y, s, s), WindowToolType.Minimize));
-            this._resizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (4 * s), y, s, s), WindowToolType.Resize));
 
             var me = this;
-            this._closeTool.mouseUp = () => {
+            this._titleBar.closeTool.mouseUp = () => {
                 me.close(WindowCloseReason.UserAction)
             };
-            this._minimizeTool.mouseUp = () => {
+            this._titleBar.minimizeTool.mouseUp = () => {
                 me.minimize(WindowMinimizeReason.UserAction)
             };
 
             this.setupWindow();
-
             this.unminimizedElement = this.element;
+            this.applyFrame();
         }
 
         public close(reason:WindowCloseReason = WindowCloseReason.UserAction):void {
@@ -1194,16 +1278,18 @@ module red {
     export class AboutWindow extends Window {
         constructor() {
             super(RectMake(0, 0, 380, 300));
+            this.title = 'About this software…';
         }
 
         public setupWindow():void {
-            var margin = 2, logoSize = 128;
-            this.minimumSize = SizeMake(200, 200);
+            var margin = 8, logoSize = 128;
+            this.minimumSize = SizeMake(203, 300);
             this.maximumSize = SizeMake(800, 600);
             var logo = this.contentView.addSubview(new View(RectMake(margin, margin, logoSize, logoSize)));
             logo.addCssClass('Logo');
             logo.addCssClass('theredhead');
-            logo.autoresizingMask = Autoresize.LockedLeft | Autoresize.LockedTop;
+            logo.autoresizingMask = AutoresizingMask.LockedLeft | AutoresizingMask.LockedTop;
+            logo.maximumSize = SizeMake(128, 128);
 
             var about = this.contentView.addSubview(new View(RectMake(
                 (2 * margin) + logo.frame.size.width, margin,
@@ -1211,7 +1297,7 @@ module red {
                 this.contentView.frame.size.height - (2 * margin)
             )));
 
-            about.autoresizingMask = Autoresize.LockedRight | Autoresize.LockedTop | Autoresize.LockedBottom;
+            about.autoresizingMask = AutoresizingMask.LockedRight | AutoresizingMask.LockedTop | AutoresizingMask.LockedBottom;
             about.element.style.padding = '0 8px';
             about.element.innerHTML =
                 '<p>This software is built with TypedUI, an easy to use typescript frontend development framework built with no external dependencies, intended for desktop replacement web applications.</p>';
@@ -1241,11 +1327,11 @@ module red {
 
         constructor(delegate:IApplicationDelegate = null) {
             this._delegate = delegate;
-            this._windowManager = new WindowManager();
+            this._desktop = new Desktop();
+            this._windowManager = new WindowManager(this._desktop);
         }
 
         public initialize():void {
-            this._desktop = new Desktop();
             this._desktop.element.addEventListener('dblclick', (e:MouseEvent) => {
                 if (e.metaKey) {
                     e.preventDefault();
@@ -1273,5 +1359,67 @@ module red {
         }
     }
 
-    export var application = new Application();
+    /**
+     * Provides a view that can scroll
+     */
+    export class ScrollView extends View {
+        public get scrollsVertically():boolean {
+            return this._scrollsVertically;
+        }
+
+        private _scrollsVertically : boolean = true;
+        public set scrollsVertically(value:boolean) {
+            this._scrollsVertically = value;
+            this.applyFrame();
+        }
+        public get scrollsHorizontally():boolean {
+            return this._scrollsHorizontally;
+        }
+
+        private _scrollsHorizontally : boolean = true;
+        public set scrollsHorizontally(value:boolean) {
+            this._scrollsHorizontally = value;
+            this.applyFrame();
+        }
+        private _contentView : View;
+        public get contentView() : View {
+            return this._contentView;
+        }
+
+        private _scrollMode:string = 'auto';
+        public get scrollMode():string {
+            return this._scrollMode;
+        }
+
+        public set scrollMode(value:string) {
+            if (['scroll', 'auto'].indexOf(value.toLowerCase())) {
+                throw new Error('scrollMode must be either "scroll" or "auto". not "'+value+'".');
+            }
+            this._scrollMode = value.toLowerCase();
+            this.applyFrame();
+        }
+
+        public constructor(aRect:red.Rect) {
+            super(aRect);
+            this._contentView = new View(RectMake(0, 0, this.frame.size.width, this.frame.size.height));
+            this.contentView.autoresizesSubviews = false;
+            this.autoresizesSubviews = false;
+
+            this.addSubview(this._contentView);
+        }
+
+        public applyFrame() : void {
+            super.applyFrame();
+            this.contentView.frame = RectMake(0, 0, this.frame.size.width, this.frame.size.height);
+            this.contentView.element.style.overflowX = this.scrollsHorizontally ? this.scrollMode : 'clip';
+            this.contentView.element.style.overflowX = this.scrollsVertically ? this.scrollMode : 'clip';
+            this.clipsContent = true;
+            this.contentView.clipsContent = false;
+        }
+    }
+
+    export var application;
+    document.addEventListener('DOMContentLoaded', ()=>{
+        application = new Application();
+    }, true);
 }
