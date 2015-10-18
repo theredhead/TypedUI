@@ -35,14 +35,18 @@ declare module red {
         constructor();
     }
     class Point {
-        public x: number;
-        public y: number;
+        private _x;
+        public x : number;
+        private _y;
+        public y : number;
         public toString(): string;
         constructor(x: number, y: number);
     }
     class Size {
-        public width: number;
-        public height: number;
+        private _width;
+        public width : number;
+        private _height;
+        public height : number;
         public toString(): string;
         constructor(width: number, height: number);
     }
@@ -107,15 +111,21 @@ declare module red {
     }
     class View extends UIElement {
         private _identifier;
+        private _minimumSize;
+        public minimumSize : Size;
+        private _maximumSize;
+        public maximumSize : Size;
         public identifier : string;
         public toString(): string;
         private _parentView;
         public parentView : View;
         private _autoresizingMask;
         public autoresizingMask : number;
-        private _autoresizesChildViews;
-        public autoresizesChildViews : string;
-        public resizeSubviewsWithOldSize(size: Size): void;
+        private _autoresizesSubviews;
+        public autoresizesSubviews : boolean;
+        public willUpdateFrame(oldFrame: Rect, newFrame: Rect): void;
+        public didUpdateFrame(oldFrame: Rect, newFrame: Rect): void;
+        public resizeSubviews(oldSize: Size, newSize: Size): void;
         public applyFrame(): void;
         private _isResizing;
         public isResizing : boolean;
@@ -124,8 +134,8 @@ declare module red {
         private _allowDragAndDrop;
         public allowDragAndDrop : boolean;
         private _subViews;
-        public addSubView(aView: View): View;
-        public removeSubView(aView: View): View;
+        public addSubview(aView: View): View;
+        public removeSubview(aView: View): View;
         public center(inRect?: Rect): void;
         constructor(frame: Rect);
         public mouseDown(e: MouseEvent): void;
@@ -184,10 +194,6 @@ declare module red {
         constructor(rect: Rect);
     }
     class UserResizableView extends View {
-        private _minimumSize;
-        public minimumSize : Size;
-        private _maximumSize;
-        public maximumSize : Size;
         private _isHorizontallySizable;
         public isHorizontallySizable : boolean;
         private _isVertictallySizable;
@@ -203,7 +209,6 @@ declare module red {
         private _sizeHandleBottomLeft;
         private _sizeHandleBottomRight;
         constructor(aRect: Rect);
-        public willUpdateFrame(oldFrame: Rect, newFrame: Rect): void;
         public applyFrame(): void;
     }
     class UserDraggableView extends UserResizableView {
@@ -216,6 +221,7 @@ declare module red {
     class Window extends UserDraggableView {
         private _titleBar;
         private _contentView;
+        public contentView : View;
         private _windowManager;
         private _canBecomeKey;
         private _tools;

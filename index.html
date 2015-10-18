@@ -15,12 +15,11 @@
 						win.minimumSize = red.SizeMake(64, 64);
 						win.maximumSize = red.SizeMake(640, 480);
 
-					red.application.desktop.addSubView(win);
+					red.application.desktop.addSubview(win);
 					win.center();
 					
-					for (var i = 0; i < 5; i++)
-					{
-						red.application.desktop.addSubView(new red.Window(red.RectMake(
+					for (var i = 0; i < 5; i++) {
+						red.application.desktop.addSubview(new red.Window(red.RectMake(
 							28 * i, 28 * i, 320, 300
 						)));
 					}

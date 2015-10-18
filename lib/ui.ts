@@ -86,8 +86,21 @@ module red {
 	}
 
 	export class Point {
-		public x: number;
-		public y: number;
+        private _x : number;
+        public get x() : number {
+            return this._x;
+        }
+        public set x(v: number) {
+            this._x = Math.round(v);
+        }
+
+        private _y : number;
+        public get y() : number {
+            return this._y;
+        }
+        public set y(v: number) {
+            this._y = Math.round(v);
+        }
 
         public toString() : string {
             return 'Point('+this.x+', '+this.y+')';
@@ -99,8 +112,20 @@ module red {
 		}
 	}
 	export class Size {
-		public width: number;
-		public height: number;
+		private _width: number;
+        public get width() : number {
+            return this._width;
+        }
+        public set width(v:number) {
+            this._width = Math.round(v);
+        }
+		private _height: number;
+        public get height() : number {
+            return this._height;
+        }
+        public set height(v:number) {
+            this._height = Math.round(v);
+        }
 
         public toString() : string {
             return 'Size('+this.width+', '+this.height+')';
@@ -276,15 +301,11 @@ module red {
 			this._element.style.left = this.frame.origin.x + 'px';
 			this._element.style.height = this.frame.size.height + 'px';
 			this._element.style.width = this.frame.size.width + 'px';
-			if (this._cssClasses.length > 0)
+
+            if (this._cssClasses.length > 0)
 				this._element.setAttribute('class', this.cssCasses.join(' '));
 			else
 				this._element.removeAttribute('class');
-
-			if (this.clipsContent)
-				this._element.style.clip = this.frame.toClipString();
-			else
-				this._element.style.clip = null;
 
 			if (this._cursor)
 				this.element.style.cursor = this._cursor;
@@ -293,6 +314,10 @@ module red {
 			if (this._backgroundImage)
 				this.element.style.background = 'url(' + this._backgroundImage + ')';
 
+            if (this.clipsContent)
+                this._element.style.clip = this.frame.toClipString();
+            else
+                this._element.style.clip = null;
 		}
 
 		public get cssCasses(): Array<string> {
@@ -374,6 +399,17 @@ module red {
 		white: new Color(255, 255, 255)
 	};
 
+    function resizeProportionally(r:Rect, oldContainer:Rect, newContainer:Rect) : Rect {
+        //console.log('resizeProportionally', arguments);
+        var factor = 100, // oldContainer.size.width * newContainer.size.width
+            factorX = ((factor / oldContainer.size.width) * (newContainer.size.width)) / factor,
+            factorY = ((factor / oldContainer.size.height) * (newContainer.size.height)) / factor,
+            origin = PointMake(r.origin.x * factorX, r.origin.y * factorY),
+            size = SizeMake(r.size.width * factorX, r.size.height * factorY);
+
+        return RectMake(origin.x, origin.y, size.width, size.height);
+    }
+
 	enum Autoresize
 	{
 		LockedTop		= 1,
@@ -387,6 +423,21 @@ module red {
 	export class View extends UIElement {
 
         private _identifier:string;
+        private _minimumSize:Size;
+        public get minimumSize() : Size {
+            return this._minimumSize;
+        }
+        public set minimumSize(v:Size) {
+            this._minimumSize = v;
+        }
+
+        private _maximumSize:Size;
+        public get maximumSize() : Size {
+            return this._maximumSize;
+        }
+        public set maximumSize(v:Size) {
+            this._maximumSize = v;
+        }
 
         public get identifier() : string {
             return this._identifier;
@@ -414,27 +465,69 @@ module red {
 			}
 		}
 
-		private _autoresizesChildViews: string;
-		public get autoresizesChildViews(): string {
-			return this._autoresizesChildViews;
+		private _autoresizesSubviews: boolean = false;
+		public get autoresizesSubviews(): boolean {
+			return this._autoresizesSubviews;
 		}
-		public set autoresizesChildViews(v: string) {
-			this._autoresizesChildViews = v;
+		public set autoresizesSubviews(v: boolean) {
+			this._autoresizesSubviews = v;
 		}
 
-		public resizeSubviewsWithOldSize(size: Size): void {
-            //console.log(
-            //    'resized ' + this.toString() +
-            //    ' from size: ' + this.frame.size.toString() +
-            //    ' to size: ' + size.toString()
-            //);
+
+        public willUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {
+            if (this.minimumSize && newFrame.size.width < this.minimumSize.width) {
+                newFrame.size.width = this.minimumSize.width;
+            }
+            if (this.minimumSize && newFrame.size.height < this.minimumSize.height) {
+                newFrame.size.height = this.minimumSize.height;
+            }
+            if (this.maximumSize && newFrame.size.width > this.maximumSize.width) {
+                newFrame.size.width = this.maximumSize.width;
+            }
+            if (this.maximumSize && newFrame.size.height > this.maximumSize.height) {
+                newFrame.size.height = this.maximumSize.height;
+            }
+
+            this.resizeSubviews(oldFrame.size, newFrame.size);
+        }
+        public didUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {
+        }
+
+		public resizeSubviews(oldSize: Size, newSize: Size): void {
+            if (oldSize != null) {
+                if (this.autoresizesSubviews) {
+                    var oldRect = RectMake(0, 0, oldSize.width, oldSize.height);
+                    for (var ix = 0; ix < this._subViews.length; ix ++) {
+                        var sub = this._subViews[ix],
+                            rect = resizeProportionally(sub.frame, oldRect, this.frame);
+
+                        if ((sub.autoresizingMask & Autoresize.LockedLeft) == Autoresize.LockedLeft) {
+                            rect.origin.x = sub.frame.origin.x;
+                        }
+                        if ((sub.autoresizingMask & Autoresize.LockedTop)  == Autoresize.LockedTop) {
+                            rect.origin.y = sub.frame.origin.y;
+                        }
+                        if ((sub.autoresizingMask & Autoresize.LockedRight) == Autoresize.LockedRight) {
+                            rect.size.width = newSize.width - (sub.frame.size.width + sub.frame.origin.x);
+                        }
+                        if ((sub.autoresizingMask & Autoresize.LockedBottom) == Autoresize.LockedBottom) {
+                            rect.size.height = newSize.height- (sub.frame.size.height + sub.frame.origin.y);
+                        }
+
+
+                        sub.frame = rect;
+                    }
+                }
+            }
 		}
 
 		public applyFrame(): void {
-			super.applyFrame();
-			for (var ix = 0; ix < this._subViews.length; ix++) {
-				this._subViews[ix].applyFrame();
-			}
+
+            for (var ix = 0; ix < this._subViews.length; ix++) {
+				var view = this._subViews[ix];
+                view.applyFrame();
+            }
+            super.applyFrame();
 		}
 
 		private _isResizing: boolean;
@@ -465,14 +558,14 @@ module red {
 
 		private _subViews: Array<View> = [];
 
-		public addSubView(aView: View): View {
+		public addSubview(aView: View): View {
 			this._subViews.push(aView);
 			aView._parentView = this;
 			this.element.appendChild(aView.element);
 			aView.draw();
 			return aView;
 		}
-		public removeSubView(aView: View): View {
+		public removeSubview(aView: View): View {
 			this._subViews.splice(this._subViews.indexOf(aView));
 			this.element.removeChild(aView.element);
 			return aView;
@@ -595,7 +688,6 @@ module red {
 			}
 
 			this.view.frame = frame;
-			this.view.applyFrame();
 			this.busy = false;
 		}
 
@@ -624,7 +716,6 @@ module red {
 			this.busy = false;
 		}
 	}
-
 
 	export class TitleBar extends View {
 		public get forWindow(): Window {
@@ -697,22 +788,6 @@ module red {
 
 	export class UserResizableView extends View {
 
-        private _minimumSize:Size;
-        public get minimumSize() : Size {
-            return this._minimumSize;
-        }
-        public set minimumSize(v:Size) {
-            this._minimumSize = v;
-        }
-
-        private _maximumSize:Size;
-        public get maximumSize() : Size {
-            return this._maximumSize;
-        }
-        public set maximumSize(v:Size) {
-            this._maximumSize = v;
-        }
-
 		private _isHorizontallySizable: boolean;
 		public get isHorizontallySizable(): boolean {
 			return this._isHorizontallySizable;
@@ -749,37 +824,37 @@ module red {
 
 		constructor(aRect: Rect) {
 			super(aRect);
-			this._resizeBorderThickness = 4;
+			this._resizeBorderThickness = 6;
 			var thickness = this._resizeBorderThickness;
-			this._sizeHandleTopLeft = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleTopLeft = this.addSubview(new WindowSizeHandle(
 				RectMake(0, 0, thickness, thickness)));
 			this._sizeHandleTopLeft.setCursor('nw-resize');
 
-			this._sizeHandleTopRight = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleTopRight = this.addSubview(new WindowSizeHandle(
 				RectMake(aRect.size.width - thickness, 0, thickness, thickness)));
 			this._sizeHandleTopRight.setCursor('ne-resize');
 
-			this._sizeHandleBottomLeft = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleBottomLeft = this.addSubview(new WindowSizeHandle(
 				RectMake(0, aRect.size.height - thickness, thickness, thickness)));
 			this._sizeHandleBottomLeft.setCursor('sw-resize');
 
-			this._sizeHandleBottomRight = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleBottomRight = this.addSubview(new WindowSizeHandle(
 				RectMake(aRect.size.width - thickness, aRect.size.height - thickness, thickness, thickness)));
 			this._sizeHandleBottomRight.setCursor('se-resize');
 
-			this._sizeHandleHorizontallyLeft = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleHorizontallyLeft = this.addSubview(new WindowSizeHandle(
 				RectMake(0, thickness, thickness, aRect.size.height - (2 * thickness))));
 			this._sizeHandleHorizontallyLeft.setCursor('w-resize');
 
-			this._sizeHandleHorizontallyRight = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleHorizontallyRight = this.addSubview(new WindowSizeHandle(
 				RectMake(aRect.size.width - thickness, thickness, thickness, aRect.size.height - (2 * thickness))));
 			this._sizeHandleHorizontallyRight.setCursor('e-resize');
 
-			this._sizeHandleVerticallyTop = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleVerticallyTop = this.addSubview(new WindowSizeHandle(
 				RectMake(thickness, 0, aRect.size.width - (2 * thickness), thickness)));
 			this._sizeHandleVerticallyTop.setCursor('n-resize');
 
-			this._sizeHandleVerticallyallyBottom = this.addSubView(new WindowSizeHandle(
+			this._sizeHandleVerticallyallyBottom = this.addSubview(new WindowSizeHandle(
 				RectMake(thickness, aRect.size.height - thickness, aRect.size.width - (2 * thickness), thickness)));
 			this._sizeHandleVerticallyallyBottom.setCursor('s-resize');
 			
@@ -835,23 +910,6 @@ module red {
             this.isVertictallySizable = true;			
 		}
 
-        public willUpdateFrame(oldFrame:Rect, newFrame:Rect) : void {
-            if (this.minimumSize && newFrame.size.width < this.minimumSize.width) {
-                newFrame.size.width = this.minimumSize.width;
-            }
-            if (this.minimumSize && newFrame.size.height< this.minimumSize.height) {
-                newFrame.size.height= this.minimumSize.height;
-            }
-            if (this.maximumSize && newFrame.size.width > this.maximumSize.width) {
-                newFrame.size.width = this.maximumSize.width;
-            }
-            if (this.maximumSize && newFrame.size.height> this.maximumSize.height) {
-                newFrame.size.height= this.maximumSize.height;
-            }
-
-            this.resizeSubviewsWithOldSize(oldFrame.size);
-        }
-
 		public applyFrame() {
 			super.applyFrame();
 			var thickness = this.resizeBorderThickness;
@@ -901,6 +959,9 @@ module red {
 	export class Window extends UserDraggableView {
 		private _titleBar: View;
 		private _contentView: View;
+        public get contentView() : View {
+            return this._contentView;
+        }
 		private _windowManager: WindowManager;
         private _canBecomeKey: boolean;
 
@@ -915,6 +976,7 @@ module red {
 
 		constructor(aRect: Rect = null) {
 			super(aRect = aRect || RectMake(0, 0, 329, 200));
+            this.minimumSize = SizeMake(64, 64);
 			this.clipsContent = false;
 			this._canBecomeKey = true;
 			this._windowManager = application.windowManager;
@@ -924,21 +986,30 @@ module red {
 			this.isDraggable = true;
 			this.dragHandleView = this._titleBar;
 
-			this.addSubView(this._titleBar);
+			this.addSubview(this._titleBar);
 			var m = this.resizeBorderThickness;
-			this._contentView = this.addSubView(new ContentView(
+			this._contentView = this.addSubview(new ContentView(
 				RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m)));
+            this._contentView.autoresizesSubviews = true;
 
 			this.allowDragAndDrop = true;
 			this.applyFrame();
 
-			this._tools = this._titleBar.addSubView(new View(RectMake(2, 2, 80, 20)));
+			this._tools = this._titleBar.addSubview(new View(RectMake(2, 2, 80, 20)));
 			this._tools.addCssClass('WindowTools');
 
 			var y = 4, s = 12, o = 8;
-			this._resizeTool = this._tools.addSubView(new WindowTool(RectMake(o, y, s, s), WindowToolType.Resize));
-			this._minimizeTool = this._tools.addSubView(new WindowTool(RectMake(o + (2 * s), y, s, s), WindowToolType.Minimize));
-			this._closeTool = this._tools.addSubView(new WindowTool(RectMake(o + (4 * s), y, s, s), WindowToolType.Close));
+			this._closeTool = this._tools.addSubview(new WindowTool(RectMake(o, y, s, s), WindowToolType.Close));
+			this._minimizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (2 * s), y, s, s), WindowToolType.Minimize));
+			this._resizeTool = this._tools.addSubview(new WindowTool(RectMake(o + (4 * s), y, s, s), WindowToolType.Resize));
+
+
+            var tw= aRect.size.width / 5, th= aRect.size.height / 5,
+                testView = new View(RectMake(tw, th, tw, th));
+                testView.setBackgroundColor(colors.green);
+                testView.autoresizingMask = Autoresize.LockedLeft | Autoresize.LockedRight | Autoresize.LockedBottom;
+
+            this.contentView.addSubview(testView);
 		}
 
 		public applyFrame(): void {
