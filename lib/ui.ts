@@ -27,6 +27,7 @@ module red {
             this._sender = sender;
         }
     }
+
     export class PropertyChangeNotification extends Notification {
         private _propertyName:string;
         get propertyName():string {
@@ -38,8 +39,10 @@ module red {
             this._propertyName = propertyName;
         }
     }
+
     export class PropertyWillChangeNotification extends PropertyChangeNotification {
     }
+
     export class PropertyDidChangeNotification extends PropertyChangeNotification {
     }
 
@@ -220,18 +223,16 @@ module red {
             this.size = size;
         }
     }
+
     export function PointMake(x, y):Point {
         return new Point(x, y);
     }
-
     export function SizeMake(width, height):Size {
         return new Size(width, height);
     }
-
     export function RectMake(x, y, width, height):Rect {
         return new Rect(PointMake(x, y), SizeMake(width, height));
     }
-
     export function RectMakeZero():Rect {
         return RectMake(0, 0, 0, 0);
     }
@@ -448,7 +449,10 @@ module red {
         darkGreen: new Color(0, 127, 0),
         darkBlue: new Color(0, 0, 127),
         black: new Color(0, 0, 0),
-        white: new Color(255, 255, 255)
+        white: new Color(255, 255, 255),
+        lightGray: new Color(196, 196, 196),
+        gray: new Color(127, 127, 127),
+        darkGray: new Color(64, 64, 64)
     };
 
     function resizeProportionally(r:Rect, oldSize:Size, newSize:Size):Rect {
@@ -895,8 +899,10 @@ module red {
             if (window.element.parentNode == null) {
                 this._container.appendChild(window.element);
             }
+
             window.visible = true;
-            //if (window === this._front) return;
+
+            if (window === this._front) return;
 
             for (var ix = 0; ix < this._windows.length; ix++) {
                 if (this._windows[ix] === window) {
@@ -916,6 +922,7 @@ module red {
                 if (container) {
                     container.removeChild(newFront.element);
                     container.appendChild(newFront.element);
+                    newFront.applyFrame();
                 }
                 newFront.addCssClass('front');
             }
@@ -941,6 +948,7 @@ module red {
         Minimize,
         Resize
     }
+
     export class WindowTool extends View {
         constructor(rect:Rect, type:WindowToolType) {
             super(rect);
@@ -1267,7 +1275,6 @@ module red {
 
         public mouseDown(e:MouseEvent):void {
             this.orderFront();
-
         }
 
         public mouseUp(e:MouseEvent):void {
@@ -1359,6 +1366,31 @@ module red {
         }
     }
 
+    export class ScrollViewContentView extends View {
+        private scrollLeft:number;
+        private scrollTop:number;
+
+        public scrolled(e:Event) {
+            this.scrollLeft = this.element.scrollLeft;
+            this.scrollTop = this.element.scrollTop;
+
+            //console.log(this.element.scrollLeft, this.element.scrollTop);
+        }
+        constructor(aRect:Rect) {
+            super(aRect);
+            var me = this;
+            this.scrollTop = 0;
+            this.scrollLeft = 0;
+            this.element.addEventListener('scroll', (e:Event) => {me.scrolled(e);}, true);
+            this.autoresizesSubviews = false;
+        }
+
+        public applyFrame() : void {
+            this.element.scrollLeft = this.scrollLeft;
+            this.element.scrollTop = this.scrollTop;
+            super.applyFrame();
+        }
+    }
     /**
      * Provides a view that can scroll
      */
@@ -1401,7 +1433,7 @@ module red {
 
         public constructor(aRect:red.Rect) {
             super(aRect);
-            this._contentView = new View(RectMake(0, 0, this.frame.size.width, this.frame.size.height));
+            this._contentView = new ScrollViewContentView(RectMake(0, 0, this.frame.size.width, this.frame.size.height));
             this.contentView.autoresizesSubviews = false;
             this.autoresizesSubviews = false;
 
@@ -1410,6 +1442,7 @@ module red {
 
         public applyFrame() : void {
             super.applyFrame();
+
             this.contentView.frame = RectMake(0, 0, this.frame.size.width, this.frame.size.height);
             this.contentView.element.style.overflowX = this.scrollsHorizontally ? this.scrollMode : 'clip';
             this.contentView.element.style.overflowX = this.scrollsVertically ? this.scrollMode : 'clip';
@@ -1419,6 +1452,7 @@ module red {
     }
 
     export var application;
+
     document.addEventListener('DOMContentLoaded', ()=>{
         application = new Application();
     }, true);

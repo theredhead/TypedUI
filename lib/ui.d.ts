@@ -307,6 +307,13 @@ declare module red {
         private aboutWindow;
         public about(): void;
     }
+    class ScrollViewContentView extends View {
+        private scrollLeft;
+        private scrollTop;
+        public scrolled(e: Event): void;
+        constructor(aRect: Rect);
+        public applyFrame(): void;
+    }
     /**
     * Provides a view that can scroll
     */

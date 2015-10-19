@@ -22,7 +22,6 @@ module tests
         public applyFrame() : void {
             super.applyFrame();
             if (this.contentView && this.scrollView) {
-                //this.contentView.frame = this.frame;
                 this.scrollView.frame = red.RectMake(0, 0, this.frame.size.width, this.frame.size.height);
             }
         }
@@ -75,7 +74,7 @@ module tests
                 test = this._tests[ix];
                 var button = content.addSubview(new red.View(red.RectMake(0, y, content.frame.size.width, y + h)));
                 button.element.innerText = test.name;
-                button.element.style.outline = 'outset 2px gray';
+                button.element.style.outline = 'solid 2px gray';
                 test.window.title = test.name;
                 //button.element.style.radiusX = button.element.style.radiusY = 5;
                 button.element.addEventListener('click', (
