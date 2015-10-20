@@ -127,6 +127,10 @@ module red {
             this.x = x;
             this.y = y;
         }
+
+        public distanceTo(other:Point) {
+            return new Point(Math.abs(this.x - other.x), Math.abs(this.y - other.y));
+        }
     }
     export class Size {
         private prep(n:number):number {
@@ -164,6 +168,10 @@ module red {
         public origin:Point;
         public size:Size;
 
+        public get center() {
+            return new Point(this.origin.x + (this.size.width / 2), this.origin.y + (this.size.height / 2));
+        }
+
         public shrink(pixels:number):Rect {
             return RectMake(
                 this.origin.x + pixels,
@@ -186,6 +194,12 @@ module red {
 
         public isEquivalentTToRect(otherRect:Rect) {
             return this.toString() == otherRect.toString();
+        }
+
+        public intersects(other:Rect) {
+            var delta = this.center.distanceTo(other.center);
+            return delta.x < (this.size.width/2) || delta.x < (other.size.width/2)
+                && delta.y < (this.size.height/2) || delta.y < (other.size.height/2);
         }
 
         public toClipString():string {

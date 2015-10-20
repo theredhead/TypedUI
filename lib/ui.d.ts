@@ -46,6 +46,7 @@ declare module red {
         public y : number;
         public toString(): string;
         constructor(x: number, y: number);
+        public distanceTo(other: Point): Point;
     }
     class Size {
         private prep(n);
@@ -59,10 +60,12 @@ declare module red {
     class Rect {
         public origin: Point;
         public size: Size;
+        public center : Point;
         public shrink(pixels: number): Rect;
         public copy(): Rect;
         public toString(): string;
         public isEquivalentTToRect(otherRect: Rect): boolean;
+        public intersects(other: Rect): boolean;
         public toClipString(): string;
         public adjustRectsToFitHorizontally(rects: Rect[], margin?: number): void;
         public adjustRectsToFitVertically(rects: Rect[], margin?: number): void;

@@ -39,60 +39,95 @@ module tests
         }
     }
 
-    class BouncingBallWindow extends red.Window {
-        public fx:number = 2;
-        public fy:number = 2;
-        public ball:HTMLElement;
-        public radius:number = 10;
-        public ballX:number = 20;
-        public ballY:number = 20;
+    class Ball extends red.View {
 
-        public applyBall() : void {
-            this.ball.style.top = (this.ballY - this.radius) + 'px';
-            this.ball.style.left = (this.ballX - this.radius) + 'px';
+        private deltaX : number;
+        private deltaY : number;
+        private deltaR : number = 0.5;
+
+        private x : number;
+        private y : number;
+        private r : number;
+
+        private minRadius;
+        private maxRadius;
+
+        constructor(x:number, y:number, r:number) {
+            super(red.RectMakeZero());
+            this.addCssClass('BouncingBall');
+            this.x = x;
+            this.y = y;
+            this.r = r;
+
+            this.minRadius = Math.floor(r / 2);
+            this.maxRadius = Math.ceil(r * 2);
+
+            this.deltaX = (Math.round(Math.random()) ? 1 : -1) * (5 * Math.random());
+            this.deltaY = (Math.round(Math.random()) ? 1 : -1) * (5 * Math.random());
+            this.applyPosition();
+        }
+
+        public isCollidingWith(other:red.View) : boolean {
+            return this.frame.intersects(other.frame);
         }
 
         public tick() : void {
-            if (this.ballX + this.fx + this.radius > this.contentView.frame.size.width) {
-                this.fx = -1 * this.fx;
+            if (this.x + this.r + this.deltaX > this.parentView.frame.size.width || this.x - this.r + this.deltaX < 0) {
+                this.deltaX = -1 * this.deltaX;
             }
-            if (this.ballY + this.fy + this.radius > this.contentView.frame.size.height) {
-                this.fy = -1 * this.fy;
+            if (this.y + this.r + this.deltaY > this.parentView.frame.size.height || this.y - this.r + this.deltaY < 0) {
+                this.deltaY = -1 * this.deltaY;
             }
-            if (this.ballX + this.fx - this.radius < 0) {
-                this.fx = -1 * this.fx;
-            }
-            if (this.ballY + this.fy - this.radius < 0) {
-                this.fy = -1 * this.fy;
+            if (this.r + this.deltaR > this.maxRadius || this.r + this.deltaR < this.minRadius) {
+                this.deltaR = -1 * this.deltaR;
             }
 
-            this.ballX += this.fx;
-            this.ballY += this.fy;
+            this.x += this.deltaX;
+            this.y += this.deltaY;
+            this.r += this.deltaR;
 
-            this.ball.style.width  = (2 * this.radius)+'px';
-            this.ball.style.height = (2 * this.radius)+'px';
+            this.applyPosition();
+        }
 
-            this.title = (this.ballX + ', ' + this.ballY);
+        public applyPosition() : void {
+            this.frame = this.makeRect(this.x, this.y, this.r);
+            this.applyFrame();
+        }
 
-            this.applyBall();
+        public makeRect(x, y, r) : red.Rect {
+            return red.RectMake(x - r, y - r, 2 * r, 2 * r);
+        }
+    }
+
+    class BouncingBallWindow extends red.Window {
+
+        public _balls : Array<Ball>;
+
+        public tick(w) : void {
+            for (var ix = 0; ix < w._balls.length; ix ++) {
+                w._balls[ix].tick();
+            }
         }
 
         public init() : void {
-            this.ball = this.element.ownerDocument.createElement('div');
-            this.ball.style.position = 'absolute';
-            this.ball.setAttribute('class', 'BouncingBall');
+            super.init();
+            var numberOfBalls = 100;
+            this._balls = [];
+            for (var n = 0; n < numberOfBalls; n ++) {
+
+                var r = (20 * Math.random()) + 5,
+                    x = Math.random() * (this.frame.size.width - r),
+                    y = Math.random() * (this.frame.size.height - r),
+                    ball = new Ball(x, y, r);
+                this._balls.push(ball);
+                this.contentView.addSubview(<red.View>ball);
+            }
 
             var update = ((w:BouncingBallWindow) => {
                 return () => {
-                    w.tick();
+                    w.tick(w);
                 };
             })(this);
-
-            super.init();
-
-            this.ballX = (this.frame.size.width / 2) - this.radius;
-            this.ballY = (this.frame.size.height / 2) - this.radius;
-            this.contentView.element.appendChild(this.ball);
             setInterval(update, 25);
         }
     }
