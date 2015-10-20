@@ -1,6 +1,36 @@
 div {
   box-sizing: border-box;
 }
+.BouncingBall {
+  border: solid 2px red;
+  background: red;
+  border-radius: 50%;
+}
+.PushButton {
+  box-sizing: border-box;
+  border-radius: 1em;
+  background: lightgray;
+  color: black;
+  text-shadow: 0 0 2px white;
+  box-shadow: inset 1px 1px 3px #ffffff, inset -1px -1px 3px #a9a9a9;
+  border: solid 1px gray;
+  text-align: center;
+  vertical-align: middle;
+}
+.PushButton:hover {
+  background: lightgray;
+  color: black;
+  text-shadow: 0 0 2px white;
+  box-shadow: inset 2px 2px 4px #ffffff, inset -2px -2px 4px #a9a9a9;
+  border: solid 1px black;
+}
+.PushButton:active {
+  background: lightgray;
+  color: black;
+  text-shadow: 0 0 2px gray;
+  box-shadow: inset -2px -2px 4px #ffffff, inset 2px 2px 4px #a9a9a9;
+  border: solid 1px gray;
+}
 .ui {
   cursor: default;
   -webkit-touch-callout: none;

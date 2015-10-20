@@ -117,6 +117,19 @@ declare module red {
         constructor(r: number, g: number, b: number, alpha?: number);
         public toString(): string;
     }
+    var colors: {
+        white: Color;
+        lightGray: Color;
+        gray: Color;
+        darkGray: Color;
+        black: Color;
+        red: Color;
+        green: Color;
+        blue: Color;
+        darkRed: Color;
+        darkGreen: Color;
+        darkBlue: Color;
+    };
     enum AutoresizingMask {
         LockedTop = 1,
         LockedLeft = 2,
@@ -150,6 +163,7 @@ declare module red {
         private _allowDragAndDrop;
         public allowDragAndDrop : boolean;
         private _subViews;
+        public subViews : View[];
         public addSubview(aView: View): View;
         public removeSubview(aView: View): View;
         public center(inRect?: Rect): void;
@@ -269,6 +283,7 @@ declare module red {
         private _minimizeTool;
         private unminimizedElement;
         public orderFront(): void;
+        public init(): void;
         constructor(aRect?: Rect);
         public close(reason?: WindowCloseReason): void;
         public windowShouldClose(reason: WindowCloseReason): boolean;
@@ -286,6 +301,8 @@ declare module red {
         public applyFrame(): void;
         public mouseDown(e: MouseEvent): void;
         public mouseUp(e: MouseEvent): void;
+        public keyDown(e: KeyboardEvent): void;
+        public keyUp(e: KeyboardEvent): void;
     }
     class AboutWindow extends Window {
         constructor();
@@ -327,6 +344,25 @@ declare module red {
         private _scrollMode;
         public scrollMode : string;
         constructor(aRect: Rect);
+        public applyFrame(): void;
+    }
+    class TextField extends View {
+        public text : string;
+    }
+    class PushButton extends View {
+        public action: any;
+        private textField;
+        public label : string;
+        constructor(aRect: Rect);
+        public makeLabelFrame(): Rect;
+        public applyFrame(): void;
+    }
+    class StackView extends View {
+        private _margin;
+        public margin : number;
+        public addSubView(view: View): void;
+        public removeSubView(view: View): void;
+        public applyStacking(): void;
         public applyFrame(): void;
     }
     var application: any;

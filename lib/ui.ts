@@ -441,18 +441,18 @@ module red {
         }
     }
 
-    var colors = {
+    export var colors = {
+        white: new Color(255, 255, 255),
+        lightGray: new Color(196, 196, 196),
+        gray: new Color(127, 127, 127),
+        darkGray: new Color(64, 64, 64),
+        black: new Color(0, 0, 0),
         red: new Color(255, 0, 0),
         green: new Color(0, 255, 0),
         blue: new Color(0, 0, 255),
         darkRed: new Color(127, 0, 0),
         darkGreen: new Color(0, 127, 0),
-        darkBlue: new Color(0, 0, 127),
-        black: new Color(0, 0, 0),
-        white: new Color(255, 255, 255),
-        lightGray: new Color(196, 196, 196),
-        gray: new Color(127, 127, 127),
-        darkGray: new Color(64, 64, 64)
+        darkBlue: new Color(0, 0, 127)
     };
 
     function resizeProportionally(r:Rect, oldSize:Size, newSize:Size):Rect {
@@ -624,6 +624,9 @@ module red {
         }
 
         private _subViews:Array<View> = [];
+        public get subViews() : Array<View> {
+            return this._subViews;
+        }
 
         public addSubview(aView:View):View {
             this._subViews.push(aView);
@@ -877,7 +880,10 @@ module red {
             if (window.element == null) {
                 throw new Error('Window hasn\'t created its element yet.');
             }
+
             this._windows.push(window);
+            window.parentView = this._container;
+            //window._windowManager = this._container;
 
             if (window.element.parentNode == null) {
                 this._container.element.appendChild(window.element);
@@ -897,7 +903,7 @@ module red {
                 throw new Error('Cannot add window that hasn\'t created its element yet.');
             }
             if (window.element.parentNode == null) {
-                this._container.appendChild(window.element);
+                this._container.element.appendChild(window.element);
             }
 
             window.visible = true;
@@ -1175,25 +1181,29 @@ module red {
             this._windowManager.orderFront(this);
         }
 
-        constructor(aRect:Rect = null) {
-            super(aRect = aRect || RectMake(0, 0, 329, 200));
+        public init() : void {
             this.addCssClass('Window');
             this.minimumSize = SizeMake(64, 64);
             this.clipsContent = false;
             this._canBecomeKey = true;
-            this._windowManager = application.windowManager;
-            this._windowManager.windows.push(this);
 
             this._titleBar = new TitleBar(RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26));
             this.isDraggable = true;
             this.dragHandleView = this._titleBar;
-
             this.addSubview(this._titleBar);
             var m = this.resizeBorderThickness;
             this._contentView = this.addSubview(new ContentView(
                 RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m)));
-
             this.allowDragAndDrop = true;
+        }
+
+        constructor(aRect:Rect = null) {
+            super(aRect = aRect || RectMake(0, 0, 329, 200));
+            this.init();
+            this._windowManager = application.windowManager;
+            this._windowManager.addWindow(this);
+
+
 
             var me = this;
             this._titleBar.closeTool.mouseUp = () => {
@@ -1278,6 +1288,13 @@ module red {
         }
 
         public mouseUp(e:MouseEvent):void {
+
+        }
+
+        public keyDown(e:KeyboardEvent) {
+
+        }
+        public keyUp(e:KeyboardEvent) {
 
         }
     }
@@ -1451,8 +1468,89 @@ module red {
         }
     }
 
-    export var application;
+    export class TextField extends View {
+        public get text() : string {
+            return this.element.innerText;
+        }
+        public set text(v:string) {
+            this.element.innerText = v;
+        }
+    }
 
+    export class PushButton extends View {
+        public action:any;
+
+        private textField:TextField;
+
+        public get label() : string {
+            return this.textField.text;
+        }
+        public set label(v:string) {
+            this.textField.text = v;
+        }
+
+        constructor(aRect:Rect) {
+            super(aRect);
+            this.action = () => {};
+            this.textField = new TextField(this.makeLabelFrame());
+            this.addSubview(this.textField);
+            this.element.addEventListener('click', () => {this.action();}, true);
+        }
+
+        public makeLabelFrame() : Rect {
+            return red.RectMake(0, 0, this.frame.size.width, this.frame.size.height);
+        }
+
+        public applyFrame() : void {
+            this.textField.frame = this.makeLabelFrame();
+            this.textField.element.style.textAlign  = 'center';
+            super.applyFrame();
+        }
+    }
+
+    export class StackView extends View {
+        private _margin: number = 0;
+        public get margin():number {
+            return this._margin;
+        }
+
+        public set margin(value:number) {
+            this._margin = value;
+        }
+
+        public addSubView(view:View) {
+            super.addSubview(view);
+            this.applyStacking();
+        }
+        public removeSubView(view:View) {
+            super.removeSubview(view);
+            this.applyStacking();
+        }
+
+        public applyStacking() : void {
+            var subViews = this.subViews,
+                subView, x, y, h, w,
+                margin = this.margin,
+                height = Math.round((this.frame.size.height - (( 1 + subViews.length) * margin)) / (subViews.length + 1));
+
+            for (var ix = 0; ix < subViews.length; ix ++) {
+                subView = subViews[ix];
+                x = margin;
+                y = margin + ((1 + ix) * (margin + height));
+                w = this.frame.size.width - (margin * 2);
+                h = height;
+                subView.frame = RectMake(x, y, w, h);
+                subView.applyFrame();
+            }
+        }
+
+        public applyFrame() : void {
+            this.applyStacking();
+        }
+    }
+
+
+    export var application;
     document.addEventListener('DOMContentLoaded', ()=>{
         application = new Application();
     }, true);
