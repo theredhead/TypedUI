@@ -374,5 +374,48 @@ declare module red {
         public applyStacking(): void;
         public applyFrame(): void;
     }
+    enum SplitViewOrientation {
+        Horizontal = 0,
+        Vertical = 1,
+    }
+    class SplitViewSplitBar extends View {
+        constructor(aRect: Rect);
+    }
+    class SplitViewAdjustManager {
+        private view;
+        private offsetPosition;
+        private mouseMoveHandler;
+        private mouseUpHandler;
+        private handleMouseMove(e);
+        private handleMouseRelease(e);
+        constructor(e: MouseEvent, view: SplitView);
+    }
+    class SplitView extends View {
+        private _isBeingResized;
+        public isBeingResized : boolean;
+        private _orientation;
+        public orientation : SplitViewOrientation;
+        private _splitterSize;
+        public splitterSize : number;
+        private _splitterPosition;
+        public splitterPosition : number;
+        private _splitterView;
+        public splitterView : View;
+        private _contentView1;
+        public contentView1 : View;
+        private _contentView2;
+        public contentView2 : View;
+        constructor(aRect: Rect);
+        public init(): void;
+        public applyFrame(): void;
+        private applyFrameHorizontal();
+        private applyFrameVertical();
+    }
+    class HorizontalSplitView extends SplitView {
+        public init(): void;
+    }
+    class VerticalSplitView extends SplitView {
+        public init(): void;
+    }
     var application: any;
 }

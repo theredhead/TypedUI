@@ -698,7 +698,7 @@ module red {
     export class Desktop extends View {
         constructor() {
             super(RectMake(0, 0, window.innerWidth, window.innerHeight));
-
+            this.clipsContent = true;
             this.addCssClass(typeId(this));
             document.getElementsByTagName('body').item(0).appendChild(this.element);
         }
@@ -1130,7 +1130,6 @@ module red {
         public get isDraggable():boolean {
             return this._isDraggable && this._dragHandleView != null;
         }
-
         public set isDraggable(v:boolean) {
             this._isDraggable = v;
         }
@@ -1139,7 +1138,6 @@ module red {
         public get dragHandleView():View {
             return this._dragHandleView || this;
         }
-
         public set dragHandleView(v:View) {
             if (v != this._dragHandleView) {
                 this._dragHandleView = v;
@@ -1584,6 +1582,223 @@ module red {
         }
     }
 
+    export enum SplitViewOrientation {
+        Horizontal,
+        Vertical
+    }
+
+    export class SplitViewSplitBar extends View {
+        constructor(aRect:Rect) {
+            super(aRect);
+            this.addCssClass('SplitViewSplitBar');
+        }
+    }
+
+    export class SplitViewAdjustManager {
+        private view:SplitView;
+        private offsetPosition:number;
+
+        private mouseMoveHandler:any;
+        private mouseUpHandler:any;
+
+        private handleMouseMove(e:MouseEvent) {
+
+            if (this.view.orientation == SplitViewOrientation.Horizontal)  {
+                this.view.splitterPosition = e.x - this.offsetPosition - (this.view.splitterSize / 2);
+            }  else  {
+                this.view.splitterPosition = e.y - this.offsetPosition - (this.view.splitterSize / 2);
+            }
+            console.log(e.x, e.y, this.view.splitterPosition);
+            e.preventDefault();
+            this.view.applyFrame();
+        }
+
+        private handleMouseRelease(e:MouseEvent) {
+            document.removeEventListener('mousemove', this.mouseMoveHandler, true);
+            document.removeEventListener('mouseup', this.mouseUpHandler, true);
+            this.view.isBeingResized = false;
+            this.view.applyFrame();
+        }
+
+        constructor(e:MouseEvent, view:SplitView) {
+            this.view = view;
+            this.view.isBeingResized = true;
+            this.view.splitterPosition = this.view.splitterPosition+1;
+            this.view.splitterPosition = this.view.splitterPosition-1;
+
+            //this.offsetPosition =
+            //    (view.orientation == SplitViewOrientation.Horizontal ? (e.x - view.frame.origin.x + view.splitterPosition) : (e.y - view.frame.origin.y + view.splitterPosition));
+
+            if (this.view.orientation == SplitViewOrientation.Horizontal)  {
+                this.offsetPosition = e.x - /*view.frame.origin.x +*/ this.view.splitterPosition - (this.view.splitterSize / 2);
+            } else {
+                this.offsetPosition = e.y - /*view.frame.origin.y +*/ this.view.splitterPosition - (this.view.splitterSize / 2);
+            }
+
+            this.mouseMoveHandler = (e:MouseEvent) => {
+                this.handleMouseMove(e);
+            };
+            this.mouseUpHandler = (e:MouseEvent) => {
+                this.handleMouseRelease(e);
+            };
+            document.addEventListener('mousemove', this.mouseMoveHandler, true);
+            document.addEventListener('mouseup', this.mouseUpHandler, true);
+        }
+    }
+
+    export class SplitView extends View {
+
+        private _isBeingResized:boolean = false;
+        public get isBeingResized():boolean {
+            return this._isBeingResized;
+        }
+        public set isBeingResized(value:boolean) {
+            this._isBeingResized = value;
+        }
+
+        private _orientation:SplitViewOrientation = SplitViewOrientation.Horizontal;
+        public get orientation():SplitViewOrientation {
+            return this._orientation;
+        }
+        public set orientation(value:SplitViewOrientation) {
+            if (this._orientation != value) {
+                this._orientation = value;
+                this.applyFrame();
+            }
+        }
+
+        private _splitterSize:number=8;
+        public get splitterSize():number {
+            return this._splitterSize;
+        }
+        public set splitterSize(value:number) {
+            if (this._splitterSize != value) {
+                this._splitterSize = value;
+                this.applyFrame();
+            }
+        }
+
+        private _splitterPosition:number=-1;
+        public get splitterPosition():number {
+            if (this._splitterPosition == -1) {
+                return this.orientation == SplitViewOrientation.Horizontal
+                    ? this.frame.size.height / 2
+                    : this.frame.size.width / 2;
+            }
+            return this._splitterPosition;
+        }
+        public set splitterPosition(value:number) {
+            if (value < 0) value = 0;
+            if (value > this.frame.size.width) value = this.frame.size.width;
+
+            if (this._splitterPosition != value) {
+                this._splitterPosition = value;
+                this.applyFrame();
+            }
+        }
+
+        private _splitterView:SplitViewSplitBar;
+        public get splitterView():red.View {
+            return this._splitterView;
+        }
+        public set splitterView(value:red.View) {
+            this._splitterView = value;
+        }
+
+        private _contentView1:View;
+        public get contentView1():red.View {
+            return this._contentView1;
+        }
+        public set contentView1(value:red.View) {
+            this._contentView1 = value;
+        }
+
+        private _contentView2:View;
+        public get contentView2():red.View {
+            return this._contentView2;
+        }
+        public set contentView2(value:red.View) {
+            this._contentView2 = value;
+        }
+
+        constructor(aRect:Rect) {
+            super(aRect);
+            this.autoresizesSubviews = false;
+            this.contentView1 = new View(RectMakeZero());
+            this.contentView2 = new View(RectMakeZero());
+            this.splitterView = new SplitViewSplitBar(RectMakeZero());
+            this.splitterView.setBackgroundColor(colors.lightGray);
+
+            this.splitterView.mouseDown = (e:MouseEvent) => {
+                if (!this.isBeingResized) {
+                    new SplitViewAdjustManager(e, this);
+                }
+            };
+
+            this.addSubview(this.contentView1);
+            this.addSubview(this.contentView2);
+            this.addSubview(this.splitterView);
+
+            this.init();
+
+            this.applyFrame();
+        }
+
+        public init() : void {
+
+        }
+
+        public applyFrame() : void {
+            super.applyFrame();
+            if (this.orientation == SplitViewOrientation.Horizontal) {
+                this.applyFrameHorizontal();
+                this.splitterView.removeCssClass('Vertical');
+                this.splitterView.addCssClass('Horizontal');
+            } else {
+                this.applyFrameVertical();
+                this.splitterView.removeCssClass('Horizontal');
+                this.splitterView.addCssClass('Vertical');
+            }
+        }
+
+        private applyFrameHorizontal():void {
+            var pos = this._splitterPosition = this._splitterPosition == -1
+                ? this.frame.size.width / 2
+                : this._splitterPosition;
+
+            this.splitterView.frame = RectMake(pos - (this.splitterSize / 2), 0, this.splitterSize, this.frame.size.height);
+            this.contentView1.frame = RectMake(0, 0, this.splitterView.frame.origin.x, this.frame.size.height);
+            this.contentView2.frame = RectMake(
+                this.splitterView.frame.origin.x + this.splitterView.frame.size.width, 0,
+                this.frame.size.width - (this.splitterView.frame.origin.x + this.splitterView.frame.size.width),
+                this.frame.size.height);
+        }
+
+        private applyFrameVertical():void {
+            var pos = this._splitterPosition = this._splitterPosition == -1
+                ? this.frame.size.height / 2
+                : this._splitterPosition;
+
+            this.splitterView.frame = RectMake(0, pos - (this.splitterSize / 2), this.frame.size.width, this.splitterSize);
+            this.contentView1.frame = RectMake(0, 0, this.frame.size.width, this.splitterPosition - (this.splitterSize / 2));
+            this.contentView2.frame = RectMake(
+                0, this.splitterView.frame.origin.y + this.splitterView.frame.size.height, this.frame.size.width,
+                this.frame.size.width - (this.splitterView.frame.origin.y + this.splitterView.frame.size.height));
+        }
+    }
+
+    export class HorizontalSplitView extends SplitView
+    {
+        public init() : void {
+            this.orientation = SplitViewOrientation.Horizontal;
+        }
+    }
+    export class VerticalSplitView extends SplitView
+    {
+        public init() : void {
+            this.orientation = SplitViewOrientation.Vertical;
+        }
+    }
 
     export var application;
     document.addEventListener('DOMContentLoaded', ()=>{

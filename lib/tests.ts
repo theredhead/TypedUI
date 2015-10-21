@@ -202,6 +202,26 @@ module tests
         }
     }
 
+    class SplitViewWindow extends red.Window {
+        public splitView:red.SplitView;
+
+        constructor(aRect:red.Rect, splitView:red.SplitView) {
+            super(aRect);
+            this.splitView = splitView;
+            this.splitView.contentView1.setBackgroundColor(red.colors.red);
+            this.splitView.contentView2.setBackgroundColor(red.colors.green);
+            this.contentView.addSubview(this.splitView);
+            this.applyFrame();
+        }
+
+        applyFrame() : void {
+            super.applyFrame();
+            if (this.splitView) {
+                this.splitView.frame = red.RectMake(0, 0, this.contentView.frame.size.width, this.contentView.frame.size.height);
+            }
+        }
+    }
+
     export class TestController
     {
         private _name:string;
@@ -269,14 +289,17 @@ module tests
     export var tests;
 
     document.addEventListener('DOMContentLoaded', ()=>{
-        var offset = 32, n = -1;
-
+        var offset = 28, n = -1;
+        var bouncy:red.Window;
         tests = new TestsController([
             new TestController('ScrollView', new ScrollViewWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
             new TestController('Push button', new PushButtonWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
-            new TestController('VerticalStackView', new VerticalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200))),
-            new TestController('HorizontalStackView', new HorizontalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200))),
-            new TestController('Bouncy', new BouncingBallWindow(red.RectMake((++n)*offset, n*offset, 640, 480))),
+            new TestController('Vertical StackView', new VerticalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200))),
+            new TestController('Horizontal StackView', new HorizontalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200))),
+            new TestController('Vertical splitter', new SplitViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200), new red.VerticalSplitView(red.RectMake(0, 0, 300, 200)))),
+            new TestController('Horizontal splitter', new SplitViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200), new red.HorizontalSplitView(red.RectMake(0, 0, 300, 200)))),
+            new TestController('Bouncy', bouncy = new BouncingBallWindow(red.RectMake((++n)*offset, n*offset, 640, 480))),
         ]);
+        bouncy.center();
     }, true);
 }

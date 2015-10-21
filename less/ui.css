@@ -1,6 +1,15 @@
 div {
   box-sizing: border-box;
 }
+.SplitView .SplitViewSplitBar {
+  cursor: grab;
+}
+.SplitView .SplitViewSplitBar.Horizontal {
+  cursor: col-resize;
+}
+.SplitView .SplitViewSplitBar.Vertical {
+  cursor: row-resize;
+}
 .BouncingBall {
   border: solid 2px red;
   background: red;
