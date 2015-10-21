@@ -1522,14 +1522,26 @@ module red {
         }
     }
 
+    export enum StackViewOrientation {
+        Horizontal,
+        Vertical
+    }
+
     export class StackView extends View {
-        private _margin: number = 0;
+        private _margin: number = 1;
         public get margin():number {
             return this._margin;
         }
-
         public set margin(value:number) {
             this._margin = value;
+        }
+
+        private _orientation:StackViewOrientation = StackViewOrientation.Vertical;
+        public get orientation():red.StackViewOrientation {
+            return this._orientation;
+        }
+        public set orientation(value:red.StackViewOrientation) {
+            this._orientation = value;
         }
 
         public addSubView(view:View) {
@@ -1543,18 +1555,25 @@ module red {
 
         public applyStacking() : void {
             var subViews = this.subViews,
-                subView, x, y, h, w,
-                margin = this.margin,
-                height = Math.round((this.frame.size.height - (( 1 + subViews.length) * margin)) / (subViews.length + 1));
+                rects : Array<Rect> = [],
+                ix = 0;
 
-            for (var ix = 0; ix < subViews.length; ix ++) {
-                subView = subViews[ix];
-                x = margin;
-                y = margin + ((1 + ix) * (margin + height));
-                w = this.frame.size.width - (margin * 2);
-                h = height;
-                subView.frame = RectMake(x, y, w, h);
-                subView.applyFrame();
+            for (ix = 0; ix < subViews.length; ix ++) {
+                rects.push(subViews[ix].frame);
+            }
+            switch (this.orientation)
+            {
+                case StackViewOrientation.Vertical:
+                    this.frame.adjustRectsToFitVertically(rects, this.margin);
+                    break;
+
+                case StackViewOrientation.Horizontal:
+                    this.frame.adjustRectsToFitHorizontally(rects, this.margin);
+                    break;
+            }
+
+            for (ix = 0; ix < subViews.length; ix ++) {
+                subViews[ix].applyFrame();
             }
         }
 

@@ -111,7 +111,7 @@ module tests
 
         public init() : void {
             super.init();
-            var numberOfBalls = 100;
+            var numberOfBalls = 10;
             this._balls = [];
             for (var n = 0; n < numberOfBalls; n ++) {
 
@@ -132,12 +132,12 @@ module tests
         }
     }
 
-    class StackViewTest extends red.Window {
-        private panel : red.StackView;
+    class StackViewWindow extends red.Window {
+        public panel : red.StackView;
         public init() : void {
             super.init();
 
-            this.panel = new red.StackView(red.RectMake(0, 0, this.frame.size.width, this.frame.size.height));
+            this.panel = new red.StackView(red.RectMake(0, 0, this.frame.size.width, this.contentView.frame.size.height));
             this.contentView.addSubview((this.panel));
             for(var key in red.colors) {
                 if (red.colors.hasOwnProperty(key)) {
@@ -151,8 +151,22 @@ module tests
         }
 
         public applyFrame() : void {
-            this.panel.frame = red.RectMake(0, 0, this.frame.size.width, this.frame.size.height);
+            this.panel.frame = red.RectMake(0, 0, this.contentView.frame.size.width, this.contentView.frame.size.height);
             super.applyFrame();
+        }
+    }
+
+    class VerticalStackViewWindow extends StackViewWindow {
+        public init() : void {
+            super.init();
+            this.panel.orientation = red.StackViewOrientation.Vertical;
+        }
+    }
+
+    class HorizontalStackViewWindow extends StackViewWindow {
+        public init() : void {
+            super.init();
+            this.panel.orientation = red.StackViewOrientation.Horizontal;
         }
     }
 
@@ -197,6 +211,8 @@ module tests
                 content = win.contentView.addSubview(new red.ScrollView(win.frame.copy())),
                 y = 0, h = 32, test, m = 4;
             win.title = 'Tests';
+            win.frame.origin.x = win.parentView.frame.size.width - win.frame.size.width;
+            win.applyFrame();
 
             for (var ix = 0; ix < this._tests.length; ix ++) {
                 y = ix * h;
@@ -219,12 +235,16 @@ module tests
     }
 
     export var tests;
+
     document.addEventListener('DOMContentLoaded', ()=>{
+        var offset = 32, n = -1;
+
         tests = new TestsController([
-            new TestController('ScrollView', new ScrollViewWindow(red.RectMake(0, 0, 320, 200))),
-            new TestController('Push button', new PushButtonWindow(red.RectMake(20, 20, 320, 200))),
-            new TestController('Bouncy', new BouncingBallWindow(red.RectMake(40, 40, 320, 200))),
-            new TestController('StackView', new StackViewTest(red.RectMake(60, 60, 300, 200)))
+            new TestController('ScrollView', new ScrollViewWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
+            new TestController('Push button', new PushButtonWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
+            new TestController('Bouncy', new BouncingBallWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
+            new TestController('VerticalStackView', new VerticalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200))),
+            new TestController('HorizontalStackView', new HorizontalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200)))
         ]);
     }, true);
 }

@@ -360,9 +360,15 @@ declare module red {
         public makeLabelFrame(): Rect;
         public applyFrame(): void;
     }
+    enum StackViewOrientation {
+        Horizontal = 0,
+        Vertical = 1,
+    }
     class StackView extends View {
         private _margin;
         public margin : number;
+        private _orientation;
+        public orientation : StackViewOrientation;
         public addSubView(view: View): void;
         public removeSubView(view: View): void;
         public applyStacking(): void;
