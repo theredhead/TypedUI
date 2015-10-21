@@ -41,9 +41,10 @@ module tests
 
     class Ball extends red.View {
 
-        private deltaX : number;
-        private deltaY : number;
-        private deltaR : number = 0.5;
+        public deltaX : number;
+        public deltaY : number;
+        public deltaR : number = 0.1;
+        public boost : number = 1.00;
 
         private x : number;
         private y : number;
@@ -71,19 +72,31 @@ module tests
             return this.frame.intersects(other.frame);
         }
 
+        public isHorizontallyCollidingWith(other:Ball) : boolean {
+            return  (this.x + this.r) >= (other.x - other.r) &&
+                    (this.x - this.r) <= (other.x + other.r);
+        }
+
+        public isVerticallyCollidingWith(other:Ball) : boolean {
+            return  (this.y + this.r) >= (other.y - other.r) &&
+                    (this.y - this.r) <= (other.y + other.r);
+        }
+
         public tick() : void {
-            if (this.x + this.r + this.deltaX > this.parentView.frame.size.width || this.x - this.r + this.deltaX < 0) {
+            if (this.x + this.r + (this.deltaX * this.boost) >= this.parentView.frame.size.width || this.x - this.r + (this.deltaX * this.boost) <= 0) {
                 this.deltaX = -1 * this.deltaX;
             }
-            if (this.y + this.r + this.deltaY > this.parentView.frame.size.height || this.y - this.r + this.deltaY < 0) {
+            if (this.y + this.r + (this.deltaY * this.boost) >= this.parentView.frame.size.height || this.y - this.r + (this.deltaY * this.boost) <= 0) {
                 this.deltaY = -1 * this.deltaY;
             }
             if (this.r + this.deltaR > this.maxRadius || this.r + this.deltaR < this.minRadius) {
                 this.deltaR = -1 * this.deltaR;
             }
 
-            this.x += this.deltaX;
-            this.y += this.deltaY;
+            this.x += (this.boost * this.deltaX);
+            this.y += (this.boost * this.deltaY);
+            this.boost = this.boost > 1 ? this.boost - 0.25 : this.boost;
+            if (this.boost > 2) this.boost = 2;
             this.r += this.deltaR;
 
             this.applyPosition();
@@ -106,18 +119,37 @@ module tests
         public tick(w) : void {
             for (var ix = 0; ix < w._balls.length; ix ++) {
                 w._balls[ix].tick();
+                for (var ix2 = 0; ix2 < w._balls.length; ix2 ++) {
+                    if (ix != ix2) {
+                        if (w._balls[ix].isCollidingWith(w._balls[ix2])) {
+                            if (w._balls[ix].isHorizontallyCollidingWith(w._balls[ix2])) {
+                                w._balls[ix].deltaX = -1 * w._balls[ix].deltaX;
+                                w._balls[ix2].deltaX = -1 * w._balls[ix2].deltaX;
+                            } else if (w._balls[ix].isVerticallyCollidingWith(w._balls[ix2])) {
+                                w._balls[ix].deltaY = -1 * w._balls[ix].deltaY;
+                                w._balls[ix2].deltaY = -1 * w._balls[ix2].deltaY;
+                            }
+
+                            w._balls[ix].deltaR = -1 * Math.abs(w._balls[ix].deltaR);
+                            w._balls[ix2].deltaR = -1 * Math.abs(w._balls[ix2].deltaR);
+
+                            w._balls[ix].tick();
+                            w._balls[ix2].tick();
+                        }
+                    }
+                }
             }
         }
 
         public init() : void {
             super.init();
-            var numberOfBalls = 10;
+            var numberOfBalls = 100;
             this._balls = [];
             for (var n = 0; n < numberOfBalls; n ++) {
 
                 var r = (20 * Math.random()) + 5,
-                    x = Math.random() * (this.frame.size.width - r),
-                    y = Math.random() * (this.frame.size.height - r),
+                    x = Math.random() * (this.contentView.frame.size.width - r),
+                    y = Math.random() * (this.contentView.frame.size.height - r),
                     ball = new Ball(x, y, r);
                 this._balls.push(ball);
                 this.contentView.addSubview(<red.View>ball);
@@ -242,9 +274,9 @@ module tests
         tests = new TestsController([
             new TestController('ScrollView', new ScrollViewWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
             new TestController('Push button', new PushButtonWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
-            new TestController('Bouncy', new BouncingBallWindow(red.RectMake((++n)*offset, n*offset, 320, 200))),
             new TestController('VerticalStackView', new VerticalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200))),
-            new TestController('HorizontalStackView', new HorizontalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200)))
+            new TestController('HorizontalStackView', new HorizontalStackViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200))),
+            new TestController('Bouncy', new BouncingBallWindow(red.RectMake((++n)*offset, n*offset, 640, 480))),
         ]);
     }, true);
 }

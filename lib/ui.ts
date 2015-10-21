@@ -129,7 +129,7 @@ module red {
         }
 
         public distanceTo(other:Point) {
-            return new Point(Math.abs(this.x - other.x), Math.abs(this.y - other.y));
+            return new Point((this.x - other.x), (this.y - other.y));
         }
     }
     export class Size {
@@ -197,9 +197,11 @@ module red {
         }
 
         public intersects(other:Rect) {
-            var delta = this.center.distanceTo(other.center);
-            return delta.x < (this.size.width/2) || delta.x < (other.size.width/2)
-                && delta.y < (this.size.height/2) || delta.y < (other.size.height/2);
+            var delta = this.center.distanceTo(other.center),
+                dx = Math.abs(delta.x),
+                dy = Math.abs(delta.y);
+            return dx < ((this.size.width/2) || dx < (other.size.width/2))
+                && dy < ((this.size.height/2) || dy < (other.size.height/2));
         }
 
         public toClipString():string {
