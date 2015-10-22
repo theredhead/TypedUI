@@ -4,7 +4,7 @@
 module red {
     export var settings = {
         debug: true,
-        displayRectInfo: false
+        displayRectInfo: true
     };
 
     export function typeId(anObject:Object):string {
@@ -186,6 +186,10 @@ module red {
                 this.origin.y,
                 this.size.width,
                 this.size.height);
+        }
+
+        public sizeOnlyCopy() : Rect {
+            return RectMake(0, 0, this.size.width, this.size.height);
         }
 
         public toString():string {
@@ -701,6 +705,7 @@ module red {
             this.clipsContent = true;
             this.addCssClass(typeId(this));
             document.getElementsByTagName('body').item(0).appendChild(this.element);
+            this.applyFrame();
         }
     }
 
@@ -825,6 +830,8 @@ module red {
         }
     }
 
+    export class TitleView extends View {
+    }
     export class TitleBar extends View {
 
         private _tools:View;
@@ -856,8 +863,9 @@ module red {
         }
         constructor(aRect:Rect) {
             super(aRect);
-            this._titleView = new View(this.makeTitleViewRect());
+            this._titleView = new TitleView(this.makeTitleViewRect());
             this._titleView.element.style.overflow = 'ellipsis';
+            this._titleView.clipsContent = true;
             this.addSubview(this._titleView);
 
             this._tools = this.addSubview(new View(RectMake(2, 2, 80, 20)));
@@ -877,7 +885,7 @@ module red {
         }
 
         public makeTitleViewRect() : Rect {
-            return RectMake(80, 4, this.frame.size.width - 80, this.frame.size.height-8);
+            return RectMake(80, 4, this.frame.size.width - 80, 20);
         }
     }
 
@@ -1591,6 +1599,7 @@ module red {
         constructor(aRect:Rect) {
             super(aRect);
             this.addCssClass('SplitViewSplitBar');
+            this.applyFrame();
         }
     }
 
@@ -1647,7 +1656,6 @@ module red {
     }
 
     export class SplitView extends View {
-
         private _isBeingResized:boolean = false;
         public get isBeingResized():boolean {
             return this._isBeingResized;
@@ -1667,7 +1675,16 @@ module red {
             }
         }
 
-        private _splitterSize:number=8;
+        private _positionFromEnd:Boolean = false;
+        public get isPositionedFromEnd():Boolean {
+            return this._positionFromEnd;
+        }
+        public set positionFromEnd(value:Boolean) {
+            this._positionFromEnd = value;
+        }
+
+
+        private _splitterSize:number = 8;
         public get splitterSize():number {
             return this._splitterSize;
         }
@@ -1678,7 +1695,7 @@ module red {
             }
         }
 
-        private _splitterPosition:number=-1;
+        private _splitterPosition:number = -1;
         public get splitterPosition():number {
             if (this._splitterPosition == -1) {
                 return this.orientation == SplitViewOrientation.Horizontal
@@ -1739,17 +1756,27 @@ module red {
             this.addSubview(this.contentView2);
             this.addSubview(this.splitterView);
 
+            this.contentView1.setBackgroundColor(red.colors.red);
+            this.contentView2.setBackgroundColor(red.colors.green);
+
             this.init();
-
+            this.splitterView.clipsContent = false;
+            this.contentView1.clipsContent = false;
+            this.contentView2.clipsContent = false;
+            this.clipsContent = false;
             this.applyFrame();
+
+            //if (this.parentView && this.frame.size != this.parentView.frame.size) {
+            //    this.frame = this.parentView.frame.sizeOnlyCopy();
+            //}
         }
 
-        public init() : void {
+
+        public init():void {
 
         }
 
-        public applyFrame() : void {
-            super.applyFrame();
+        public applyFrame():void {
             if (this.orientation == SplitViewOrientation.Horizontal) {
                 this.applyFrameHorizontal();
                 this.splitterView.removeCssClass('Vertical');
@@ -1759,6 +1786,7 @@ module red {
                 this.splitterView.removeCssClass('Horizontal');
                 this.splitterView.addCssClass('Vertical');
             }
+            super.applyFrame();
         }
 
         private applyFrameHorizontal():void {
@@ -1784,6 +1812,28 @@ module red {
             this.contentView2.frame = RectMake(
                 0, this.splitterView.frame.origin.y + this.splitterView.frame.size.height, this.frame.size.width,
                 this.frame.size.width - (this.splitterView.frame.origin.y + this.splitterView.frame.size.height));
+        }
+
+        public didUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
+            if (! this.isBeingResized && this.isPositionedFromEnd) {
+                var offset;
+                if (this.orientation == SplitViewOrientation.Horizontal) {
+                    offset = oldFrame.size.width - this.splitterPosition;
+                    this.splitterPosition = newFrame.size.width - offset;
+                    if (this.splitterPosition < 0)
+                        this.splitterPosition = 0;
+                    else if (this.splitterPosition > newFrame.size.width)
+                        this.splitterPosition =  newFrame.size.width;
+                } else {
+                    offset = oldFrame.size.height - this.splitterPosition;
+                    this.splitterPosition = newFrame.size.height- offset;
+                    if (this.splitterPosition < 0)
+                        this.splitterPosition = 0;
+                    else if (this.splitterPosition > newFrame.size.height)
+                        this.splitterPosition =  newFrame.size.height;
+                }
+            }
+            super.didUpdateFrame(oldFrame, newFrame);
         }
     }
 

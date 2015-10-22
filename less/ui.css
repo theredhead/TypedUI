@@ -1,3 +1,6 @@
+body {
+  font-family: 'Lucida Bright', sans-serif;
+}
 div {
   box-sizing: border-box;
 }
@@ -106,6 +109,9 @@ div {
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   background: rgba(246, 246, 246, 0.8);
+}
+.Window .TitleBar .TitleView {
+  font-family: 'Lucida Bright';
 }
 .Window .TitleBar .WindowTools .WindowTool {
   border-radius: 50%;

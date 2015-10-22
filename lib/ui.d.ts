@@ -63,6 +63,7 @@ declare module red {
         public center : Point;
         public shrink(pixels: number): Rect;
         public copy(): Rect;
+        public sizeOnlyCopy(): Rect;
         public toString(): string;
         public isEquivalentTToRect(otherRect: Rect): boolean;
         public intersects(other: Rect): boolean;
@@ -202,6 +203,8 @@ declare module red {
         private handleMouseMove(e);
         private handleMouseRelease(e);
         constructor(e: MouseEvent, view: View, directionMask: number);
+    }
+    class TitleView extends View {
     }
     class TitleBar extends View {
         private _tools;
@@ -395,6 +398,9 @@ declare module red {
         public isBeingResized : boolean;
         private _orientation;
         public orientation : SplitViewOrientation;
+        private _positionFromEnd;
+        public isPositionedFromEnd : Boolean;
+        public positionFromEnd : Boolean;
         private _splitterSize;
         public splitterSize : number;
         private _splitterPosition;
@@ -410,6 +416,7 @@ declare module red {
         public applyFrame(): void;
         private applyFrameHorizontal();
         private applyFrameVertical();
+        public didUpdateFrame(oldFrame: Rect, newFrame: Rect): void;
     }
     class HorizontalSplitView extends SplitView {
         public init(): void;
