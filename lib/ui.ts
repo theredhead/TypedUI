@@ -498,6 +498,31 @@ module red {
     var viewId = 0;
     export class View extends UIElement {
 
+        public get minimumWidth() : number {
+            if (this.minimumSize) {
+                return this.minimumSize.width;
+            }
+            return 0;
+        }
+        public get minimumHeight() : number {
+            if (this.minimumSize) {
+                return this.minimumSize.height;
+            }
+            return 0;
+        }
+        public get maximumWidth() : number {
+            if (this.maximumSize) {
+                return this.maximumSize.width;
+            }
+            return window.innerWidth;
+        }
+        public get maximumHeight() : number {
+            if (this.maximumSize) {
+                return this.maximumSize.height;
+            }
+            return window.innerHeight;
+        }
+
         private _identifier:string;
         private _minimumSize:Size;
         public get minimumSize():Size {

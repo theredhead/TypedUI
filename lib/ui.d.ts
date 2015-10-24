@@ -143,6 +143,10 @@ declare module red {
         HeightSizable = 32,
     }
     class View extends UIElement {
+        public minimumWidth : number;
+        public minimumHeight : number;
+        public maximumWidth : number;
+        public maximumHeight : number;
         private _identifier;
         private _minimumSize;
         public minimumSize : Size;
