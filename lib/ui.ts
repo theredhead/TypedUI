@@ -253,6 +253,16 @@ module red {
     export function RectMake(x, y, width, height):Rect {
         return new Rect(PointMake(x, y), SizeMake(width, height));
     }
+
+    export function RectInset(r:Rect, p:number):Rect {
+        return new Rect(PointMake(r.origin.x+p, r.origin.y+p), SizeMake(r.size.width-(2*p), r.size.height-(2*p)));
+    }
+
+    export function RectOutset(r:Rect, p:number):Rect {
+        return new Rect(PointMake(r.origin.x-p, r.origin.y-p), SizeMake(r.size.width+(2*p), r.size.height+(2*p)));
+    }
+
+
     export function RectMakeZero():Rect {
         return RectMake(0, 0, 0, 0);
     }
@@ -700,6 +710,7 @@ module red {
         constructor(frame:Rect) {
             super(frame);
             this._identifier = typeId(this) + (viewId++).toString();
+            this.element.setAttribute('id', this._identifier);
             this._isBeingDragged = false;
             this._isResizing = false;
 
@@ -1874,6 +1885,58 @@ module red {
             this.orientation = SplitViewOrientation.Vertical;
         }
     }
+
+    export class TextEditor extends View
+    {
+        private _editor : any;
+        private _ace : HTMLElement;
+
+        public get mode() : string {
+            return this._editor.getSession().getMode();
+
+        }
+        public set mode(v : string) : void{
+            this._editor.getSession().setMode(v);
+        }
+
+
+        public get stringValue() : string {
+            return this._editor.getValue();
+        }
+
+        public set stringValue(v:string){
+            return this._editor.setValue(v);
+        }
+
+        public constructor(rect:Rect) {
+            super(rect);
+            var me = this;
+            this._ace = document.createElement('div');
+            this.element.appendChild(this._ace);
+            this._editor = ace.edit(this._ace);
+
+
+            this._editor.getSession().on('change', function(e) {
+                me.onStringValueDidChange(e);
+            });
+        }
+
+        public onStringValueDidChange(e:any) {
+            // console.log('onStringValueDidChange', e, this.stringValue);
+        }
+
+        public applyFrame() : void {
+            this._ace.style.position = 'absolute';
+            this._ace.style.display = 'block';
+            this._ace.style.top = this.frame.origin.y + 'px';
+            this._ace.style.left = this.frame.origin.x + 'px';
+            this._ace.style.height = this.frame.size.height + 'px';
+            this._ace.style.width = this.frame.size.width + 'px';
+
+            super.applyFrame();
+        }
+    }
+
 
     export var application;
     document.addEventListener('DOMContentLoaded', ()=>{
