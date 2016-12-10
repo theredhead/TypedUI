@@ -11,39 +11,109 @@
 		<script type="text/javascript">
 		document.addEventListener('DOMContentLoaded', function() {
 
+		    makeAceWindow = function(mode) {
+
+                var win = new red.Window();
+                win.minimumSize = red.SizeMake(200, 100);
+                win.maximumSize = red.SizeMake(640, 480);
+                win.frame = red.RectMake(0, 0, 640, 480);
+                win.title = 'ACE editor ' + mode;
+
+                var ed = new red.TextEditor(red.RectMake(0, 0, win.contentView.frame.size.width, win.contentView.frame.size.height));
+                ed.autoresizingMask = red.ResizeWithParent;
+                win.contentView.addSubview(ed);
+                win.center();
+                ed.mode = mode;
+                return win;
+			};
+
+		    function makeTransformationWindow() {
+
+		        var win = red.WindowWithSize(red.SizeMake(408, 434));
+
+		        win.title = "Transformer"
+				// makes the contentView 400x400
+
+                var vSplitter = new red.VerticalSplitView(red.RectMake(0,0,400,400));
+                vSplitter.identifier = 'vSplitter';
+                win.contentView.addSubview(vSplitter);
+
+                var hSplitter = new red.HorizontalSplitView(red.RectMake(0,0,400,200));
+                hSplitter.identifier = 'hSplitter';
+                vSplitter.contentView1.addSubview(hSplitter);
+                hSplitter.autoresizingMask = red.ResizeWithParent;
+                hSplitter.contentView2.setBackgroundColor(red.colors.blue);
+
+				var xmlEditor = new red.TextEditor(hSplitter.contentView1.frame);
+				hSplitter.contentView1.addSubview(xmlEditor);
+				xmlEditor.stringValue = "XML editor";
+				xmlEditor.mode = "ace/mode/xml";
+
+                var xslEditor = new red.TextEditor(red.RectMakeZero(hSplitter.contentView2.frame.size));
+                hSplitter.contentView2.addSubview(xslEditor);
+                xslEditor.stringValue = "XSL editor";
+                xslEditor.mode = "ace/mode/xml";
+//
+                var resultEditor = new red.TextEditor(red.RectMakeZero(vSplitter.contentView2.frame.size));
+				vSplitter.contentView2.addSubview(resultEditor);
+//				win.applyFrame();
+
+				win.frame = red.RectInset(red.application.desktop.frame, 32);
+				hSplitter.splitterPosition = (win.frame.size.width / 2) - (hSplitter.splitterSize / 2);
+
+                win.center();
+
+                var delegate =
+					{
+                        stringValueDidChange: function() {
+
+                            try
+							{
+                                var parser = new DOMParser();
+
+								var xml = parser.parseFromString(xmlEditor.stringValue, 'text/xml');
+								var xsl = parser.parseFromString(xslEditor.stringValue, 'text/xml');
+
+                                var processor = new XSLTProcessor();
+                                processor.importStylesheet(xsl);
+
+                                var output = processor.transformToFragment(xml, document.implementation.createDocument());
+
+                                if (output != null)
+								{
+                                    var serializer = new XMLSerializer();
+                                    resultEditor.stringValue = serializer.serializeToString(output);
+                                }
+							}
+							catch(e)
+							{
+							    console.error(e);
+							}
+                        }
+					};
+
+                xmlEditor.delegate = delegate;
+                xslEditor.delegate = delegate;
+
+				var button = new red.PushButton(red.RectMakeZero(red.SizeMake(140, 24)));
+				button.label = "Transform tool";
+				button.action = (s) => {
+                    win.orderFront();
+				};
+				red.application.desktop.addSubview(button);
+				button.applyFrame();
+                return win;
+			};
+
 			red.application.delegate = {
 				applicationDidFinishLaunching: function() {
 					red.application.desktop.setBackgroundImage('img/mountains.jpg');
 
-					var win = new red.Window();
-					win.minimumSize = red.SizeMake(200, 100);
-					win.maximumSize = red.SizeMake(640, 480);
-                    win.frame = red.RectMake(0, 0, 640, 480);
-					win.title = 'ACE editor.';
+//                    red.application.desktop.addSubview(makeAceWindow('ace/mode/sql'));
+//                    red.application.desktop.addSubview(makeAceWindow('ace/mode/xml'));
+//                    red.application.desktop.addSubview(makeAceWindow('ace/mode/javascript'));
 
-
-					var ed = new red.TextEditor(red.RectMake(0, 0, win.contentView.frame.size.width, win.contentView.frame.size.height));
-					ed.autoresizingMask =
-						red.AutoresizingMask.HeightSizable |
-						red.AutoresizingMask.WidthSizable |
-                        red.AutoresizingMask.LockedLeft |
-                        red.AutoresizingMask.LockedRight |
-	                    red.AutoresizingMask.LockedTop |
-    	                red.AutoresizingMask.LockedBottom;
-					win.contentView.addSubview(ed);
-					ed.mode = 'ace/mode/xml';
-
-					red.application.desktop.addSubview(win);
-
-					win.center();
-
-
-
-					//					for (var i = 0; i < 5; i++) {
-//						red.application.desktop.addSubview(new red.Window(red.RectMake(
-//								28 * i, 28 * i, 320, 300
-//						)));
-//					}
+                    red.application.desktop.addSubview(makeTransformationWindow());
 				}
 			};
 			red.application.run();

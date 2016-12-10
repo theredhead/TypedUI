@@ -238,6 +238,11 @@ module red {
             }
         }
 
+
+        public get isNegativeRect() : boolean {
+            return this.width < 0 || this.height < 0;
+        }
+
         constructor(origin:Point, size:Size) {
             this.origin = origin;
             this.size = size;
@@ -263,8 +268,11 @@ module red {
     }
 
 
-    export function RectMakeZero():Rect {
-        return RectMake(0, 0, 0, 0);
+    export function RectMakeZero(s:Size=null):Rect {
+        if (s == null)
+            return RectMake(0, 0, 0, 0);
+        else
+            return new Rect(new Point(0, 0), s);
     }
 
     export class UIElement {
@@ -503,10 +511,27 @@ module red {
         LockedBottom = 4,
         LockedRight = 8,
         WidthSizable = 16,
-        HeightSizable = 32
+        HeightSizable = 32,
     }
+
+    export let ResizeWithParent = AutoresizingMask.HeightSizable | AutoresizingMask.WidthSizable | AutoresizingMask.LockedLeft | AutoresizingMask.LockedRight | AutoresizingMask.LockedTop | AutoresizingMask.LockedBottom;
+
     var viewId = 0;
-    export class View extends UIElement {
+    export class View extends UIElement
+    {
+        public get frame():Rect {
+            return this._frame;
+        }
+
+        public set frame(v:Rect) {
+            if (!this._frame.isEquivalentTToRect(v) && ! v.isNegativeRect) {
+                let oldFrame = this._frame;
+                this.willUpdateFrame(oldFrame, v);
+                this._frame = v;
+                this.applyFrame();
+                this.didUpdateFrame(oldFrame, v);
+            }
+        }
 
         public get minimumWidth() : number {
             if (this.minimumSize) {
@@ -556,6 +581,10 @@ module red {
             return this._identifier;
         }
 
+        public set identifier(v:string) {
+            this._identifier = v;
+        }
+
         public toString():string {
             return this.identifier;
         }
@@ -569,7 +598,7 @@ module red {
             this._parentView = aView;
         }
 
-        private _autoresizingMask:number;
+        private _autoresizingMask:number = AutoresizingMask.LockedTop | AutoresizingMask.LockedLeft;
         public get autoresizingMask():number {
             return this._autoresizingMask;
         }
@@ -580,7 +609,7 @@ module red {
             }
         }
 
-        private _autoresizesSubviews:boolean = false;
+        private _autoresizesSubviews:boolean = true;
         public get autoresizesSubviews():boolean {
             return this._autoresizesSubviews;
         }
@@ -608,6 +637,7 @@ module red {
         }
 
         public didUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
+            // console.log(this.identifier + ' updated frame from ' + oldFrame + ' to ' + newFrame);
         }
 
         public resizeSubviews(oldSize:Size, newSize:Size):void {
@@ -638,15 +668,17 @@ module red {
                         sub.frame = rect;
                     }
                 }
+                // else
+                    // console.log(this.identifier + ' does not resize subViews');
             }
         }
 
         public applyFrame():void {
-            super.applyFrame();
-            for (var ix = 0; ix < this._subViews.length; ix++) {
-                var view = this._subViews[ix];
+            for (let ix = 0; ix < this._subViews.length; ix++) {
+                let view = this._subViews[ix];
                 view.applyFrame();
             }
+            super.applyFrame();
         }
 
         private _isResizing:boolean;
@@ -899,6 +931,7 @@ module red {
         }
         constructor(aRect:Rect) {
             super(aRect);
+            this.autoresizesSubviews = false;
             this._titleView = new TitleView(this.makeTitleViewRect());
             this._titleView.element.style.overflow = 'ellipsis';
             this._titleView.clipsContent = true;
@@ -1006,6 +1039,8 @@ module red {
         constructor(aRect:Rect) {
             super(aRect);
             this.autoresizesSubviews = true;
+
+            // console.log('Created a ContentView');
         }
     }
 
@@ -1155,7 +1190,7 @@ module red {
         }
 
         public applyFrame() {
-            var thickness = this.resizeBorderThickness;
+            let thickness = this.resizeBorderThickness;
             this._sizeHandleTopLeft.frame = RectMake(0, 0, thickness, thickness);
             this._sizeHandleTopRight.frame = RectMake(this.frame.size.width - thickness, 0, thickness, thickness);
             this._sizeHandleBottomLeft.frame = RectMake(0, this.frame.size.height - thickness, thickness, thickness);
@@ -1209,7 +1244,27 @@ module red {
         UserAction
     }
 
+        export function WindowWithSize(s: Size) : Window
+    {
+        let win: Window = new Window(RectMakeZero());
+
+        win.frame.size = s;
+        win.applyFrame();
+
+        return win;
+    }
+
     export class Window extends UserDraggableView {
+
+        private _delegate : any;
+
+        public get delegate() : any {
+            return this._delegate;
+        }
+        public set delegate(d:any) : void {
+            this._delegate = d;
+        }
+
         public get title():string {
             return this._titleBar.title;
         }
@@ -1236,6 +1291,7 @@ module red {
         private unminimizedElement:HTMLElement;
 
         public orderFront():void {
+            this.visible = false;
             this._windowManager.orderFront(this);
         }
 
@@ -1285,31 +1341,70 @@ module red {
         }
 
         public windowShouldClose(reason:WindowCloseReason):boolean {
+            if (this.delegate) {
+                let fn =  this.delegate.windowShouldClose;
+                if (typeof fn == "function") {
+                    return fn.call(this.delegate, this, reason);
+                }
+            }
             return true;
         }
 
         public windowWillClose() {
+            if (this.delegate) {
+                let fn =  this.delegate.windowDidClose;
+                if (typeof fn == "function") {
+                    return fn.call(this.delegate, this);
+                }
+            }
         }
 
         public windowDidClose() {
+            if (this.delegate) {
+                let fn =  this.delegate.windowDidClose;
+                if (typeof fn == "function") {
+                    return fn.call(this.delegate, this);
+                }
+            }
         }
 
         public minimize(reason:WindowMinimizeReason = WindowMinimizeReason.UserAction):void {
             if (this.windowShouldMinimize(reason)) {
                 this.windowWillMinimize();
-                //this.parentView.removeSubview(this);
+                // this.parentView.removeSubview(this);
+
+                this.visible = false;
+
                 this.windowDidMinimize();
             }
         }
 
         public windowShouldMinimize(reason:WindowMinimizeReason):boolean {
+            if (this.delegate) {
+                let fn =  this.delegate.windowShouldMinimize;
+                if (typeof fn == "function") {
+                    return fn.call(this.delegate, this, reason);
+                }
+            }
             return true;
         }
 
         public windowWillMinimize() {
+            if (this.delegate) {
+                let fn =  this.delegate.windowWillMinimize;
+                if (typeof fn == "function") {
+                    return fn.call(this.delegate, this);
+                }
+            }
         }
 
         public windowDidMinimize() {
+            if (this.delegate) {
+                let fn =  this.delegate.windowDidMinimize;
+                if (typeof fn == "function") {
+                    return fn.call(this.delegate, this);
+                }
+            }
         }
 
         public unminimize(reason:WindowMinimizeReason = WindowMinimizeReason.UserAction):void {
@@ -1321,13 +1416,31 @@ module red {
         }
 
         public windowShouldUnMinimize(reason:WindowMinimizeReason):boolean {
+            if (this.delegate) {
+                let fn =  this.delegate.windowShouldUnMinimize;
+                if (typeof fn == "function") {
+                    return fn.call(this.delegate, this, reason);
+                }
+            }
             return true;
         }
 
         public windowWillUnMinimize() {
+            if (this.delegate) {
+                let fn =  this.delegate.windowWillUnMinimize;
+                if (typeof fn == "function") {
+                    fn.call(this.delegate, this);
+                }
+            }
         }
 
         public windowDidUnMinimize() {
+            if (this.delegate) {
+                let fn =  this.delegate.windowDidUnMinimize;
+                if (typeof fn == "function") {
+                    fn.call(this.delegate, this);
+                }
+            }
         }
 
         public setupWindow():void {
@@ -1337,7 +1450,7 @@ module red {
         public applyFrame():void {
             super.applyFrame();
             this._titleBar.frame = RectMake(this.resizeBorderThickness, this.resizeBorderThickness, this.frame.size.width - (2 * this.resizeBorderThickness), this.resizeBorderThickness + 26);
-            var m = this.resizeBorderThickness;
+            let m = this.resizeBorderThickness;
             this._contentView.frame = RectMake(m, this._titleBar.frame.size.height, this.frame.size.width - (m * 2), this.frame.size.height - this._titleBar.frame.size.height - m);
         }
 
@@ -1448,8 +1561,6 @@ module red {
         public scrolled(e:Event) {
             this.scrollLeft = this.element.scrollLeft;
             this.scrollTop = this.element.scrollTop;
-
-            //console.log(this.element.scrollLeft, this.element.scrollTop);
         }
         constructor(aRect:Rect) {
             super(aRect);
@@ -1649,11 +1760,15 @@ module red {
         private handleMouseMove(e:MouseEvent) {
 
             if (this.view.orientation == SplitViewOrientation.Horizontal)  {
-                this.view.splitterPosition = e.x - this.offsetPosition - (this.view.splitterSize / 2);
+                let draggedToPosition = e.x - this.offsetPosition - (this.view.splitterSize / 2);
+                if (draggedToPosition <= this.view.frame.size.width)
+                    this.view.splitterPosition = draggedToPosition;
             }  else  {
-                this.view.splitterPosition = e.y - this.offsetPosition - (this.view.splitterSize / 2);
+                let draggedToPosition = e.y - this.offsetPosition - (this.view.splitterSize / 2);
+                if (draggedToPosition <= this.view.frame.size.height)
+                    this.view.splitterPosition = draggedToPosition;
             }
-            console.log(e.x, e.y, this.view.splitterPosition);
+
             e.preventDefault();
             this.view.applyFrame();
         }
@@ -1668,8 +1783,8 @@ module red {
         constructor(e:MouseEvent, view:SplitView) {
             this.view = view;
             this.view.isBeingResized = true;
-            this.view.splitterPosition = this.view.splitterPosition+1;
-            this.view.splitterPosition = this.view.splitterPosition-1;
+            // this.view.splitterPosition = this.view.splitterPosition+1;
+            // this.view.splitterPosition = this.view.splitterPosition-1;
 
             //this.offsetPosition =
             //    (view.orientation == SplitViewOrientation.Horizontal ? (e.x - view.frame.origin.x + view.splitterPosition) : (e.y - view.frame.origin.y + view.splitterPosition));
@@ -1776,9 +1891,10 @@ module red {
 
         constructor(aRect:Rect) {
             super(aRect);
-            this.autoresizesSubviews = false;
+            this.autoresizesSubviews = true;
             this.contentView1 = new View(RectMakeZero());
             this.contentView2 = new View(RectMakeZero());
+
             this.splitterView = new SplitViewSplitBar(RectMakeZero());
             this.splitterView.setBackgroundColor(colors.lightGray);
 
@@ -1787,6 +1903,8 @@ module red {
                     new SplitViewAdjustManager(e, this);
                 }
             };
+
+            // this.splitterView.setBackgroundColor(colors.darkBlue);
 
             this.addSubview(this.contentView1);
             this.addSubview(this.contentView2);
@@ -1797,19 +1915,17 @@ module red {
 
             this.init();
             this.splitterView.clipsContent = false;
-            this.contentView1.clipsContent = false;
-            this.contentView2.clipsContent = false;
+            this.contentView1.clipsContent = true;
+            this.contentView2.clipsContent = true;
             this.clipsContent = false;
             this.applyFrame();
-
-            //if (this.parentView && this.frame.size != this.parentView.frame.size) {
-            //    this.frame = this.parentView.frame.sizeOnlyCopy();
-            //}
         }
 
 
         public init():void {
-
+            if (this.parentView && this.frame.size != this.parentView.frame.size) {
+               this.frame = this.parentView.frame.sizeOnlyCopy();
+            }
         }
 
         public applyFrame():void {
@@ -1822,11 +1938,12 @@ module red {
                 this.splitterView.removeCssClass('Horizontal');
                 this.splitterView.addCssClass('Vertical');
             }
+
             super.applyFrame();
         }
 
         private applyFrameHorizontal():void {
-            var pos = this._splitterPosition = this._splitterPosition == -1
+            let pos = this._splitterPosition = this._splitterPosition == -1
                 ? this.frame.size.width / 2
                 : this._splitterPosition;
 
@@ -1839,15 +1956,15 @@ module red {
         }
 
         private applyFrameVertical():void {
-            var pos = this._splitterPosition = this._splitterPosition == -1
+            let pos = this._splitterPosition = this._splitterPosition == -1
                 ? this.frame.size.height / 2
                 : this._splitterPosition;
 
             this.splitterView.frame = RectMake(0, pos - (this.splitterSize / 2), this.frame.size.width, this.splitterSize);
             this.contentView1.frame = RectMake(0, 0, this.frame.size.width, this.splitterPosition - (this.splitterSize / 2));
             this.contentView2.frame = RectMake(
-                0, this.splitterView.frame.origin.y + this.splitterView.frame.size.height, this.frame.size.width,
-                this.frame.size.width - (this.splitterView.frame.origin.y + this.splitterView.frame.size.height));
+                0, this.splitterView.frame.origin.y + this.splitterSize, this.frame.size.width,
+                this.frame.size.height - (this.splitterView.frame.origin.y + this.splitterSize));
         }
 
         public didUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
@@ -1891,6 +2008,15 @@ module red {
         private _editor : any;
         private _ace : HTMLElement;
 
+        private _delegate : any;
+
+        public get delegate() : any {
+            return this._delegate;
+        }
+        public set delegate(d:any) : void {
+            this._delegate = d;
+        }
+
         public get mode() : string {
             return this._editor.getSession().getMode();
 
@@ -1915,7 +2041,6 @@ module red {
             this.element.appendChild(this._ace);
             this._editor = ace.edit(this._ace);
 
-
             this._editor.getSession().on('change', function(e) {
                 me.onStringValueDidChange(e);
             });
@@ -1923,6 +2048,12 @@ module red {
 
         public onStringValueDidChange(e:any) {
             // console.log('onStringValueDidChange', e, this.stringValue);
+
+            if (this.delegate) {
+                let fn = this.delegate.stringValueDidChange;
+                if (typeof fn == 'function')
+                    fn.call(this.delegate, this);
+            }
         }
 
         public applyFrame() : void {

@@ -11,11 +11,6 @@ module tests
             this.contentView.addSubview(this.scrollView);
             this.contentView.autoresizesSubviews = false;
             var img = this.scrollView.contentView.addSubview(new red.View(red.RectMake(0,0,1920, 1200)));
-            //img.autoresizingMask =
-            //    red.AutoresizingMask.LockedTop |
-            //    red.AutoresizingMask.LockedRight |
-            //    red.AutoresizingMask.LockedBottom |
-            //    red.AutoresizingMask.LockedLeft;
             img.setBackgroundImage('img/mountains.jpg');
             this.applyFrame();
         }
@@ -298,8 +293,10 @@ module tests
 
             for (var ix = 0; ix < this._tests.length; ix ++) {
                 y = ix * h;
-                test = this._tests[ix];
-                var button = <red.PushButton>content.addSubview(new red.PushButton(red.RectMake(m, m+y, content.frame.size.width-(4*m), h-(2*m))));
+                let test = <TestController>this._tests[ix];
+                test.window.minimize();
+
+                let button = <red.PushButton>content.addSubview(new red.PushButton(red.RectMake(m, m+y, content.frame.size.width-(4*m), h-(2*m))));
                 button.label = test.name;
 
                 test.window.title = test.name;
@@ -311,8 +308,7 @@ module tests
                         };
                     })(test);
             }
-
-            win.orderFront();
+            win.applyFrame();
         }
     }
 
@@ -331,7 +327,7 @@ module tests
             new TestController('Vertical splitter', new SplitViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200), new red.VerticalSplitView(red.RectMake(0, 0, 300, 200)))),
             new TestController('Horizontal splitter', new SplitViewWindow(red.RectMake((++n)*offset, n*offset, 300, 200), new red.HorizontalSplitView(red.RectMake(0, 0, 300, 200)))),
             new TestController('Bouncy', bouncy = new BouncingBallWindow(red.RectMake((++n)*offset, n*offset, 640, 480))),
-            //new TestController('MainWindow', mainWindow = new MainWindow(red.RectMake((++n)*offset, n*offset, 640, 480))),
+            // new TestController('MainWindow', mainWindow = new MainWindow(red.RectMake((++n)*offset, n*offset, 640, 480))),
         ]);
         bouncy.center();
         //mainWindow.center();
