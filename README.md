@@ -9,9 +9,10 @@ I wondered how much code it would take to build something usable so I wrote this
     1. present draggable, resizable windows.
     2. resize sub views in windows in several ways.
 
-## things it doesn't
+## things it does not do
 
     1. provide anything immediately useful
+    2. present itself in an orderly fashion (it is just a test that was never intended to be an actual project)
 
 ## Purpose
 
