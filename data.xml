@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<Entities name="MyDataProject">
+
+    <Entity name="Gender" description="{Value}">
+        <Property name="Value" storageType="VARCHAR(32)" required="true"/>
+        <Property name="Description" storageType="MBString" required="true" />
+    </Entity>
+
+    <Entity name="Person" description="{Name} {MiddleName} {Surname}">
+        <Property name="Name" storageType="VARCHAR(64)" required="true"/>
+        <Property name="MiddleName" storageType="VARCHAR(64)" required="false"/>
+        <Property name="Surname" storageType="VARCHAR(64)" required="false"/>
+        <Property name="MaidenName" storageType="VARCHAR(64)" required="false"/>
+        <Property name="Birthday" storageType="DateTime" required="false"/>
+        <Property name="DeathDate" storageType="DateTime" required="false"/>
+        
+        <Relation name="HomeAddress" toEntity="Address" type="hasOne" required="false"/>
+        <Relation name="WorkAddress" toEntity="Address" type="hasOne" required="false"/>
+
+        <Relation name="Addresses" type="hasMany" required="false" toEntity="Address"/>
+        <Relation name="PhoneNumbers" type="hasMany" required="false" toEntity="PhoneNumber"/>
+        <Relation name="EmailAddresses" type="hasMany" required="false" toEntity="EmailAddress"/>
+
+        <Relation name="Gender" type="hasOne" required="false" toEntity="Gender"/>
+        <Relation name="Avatar" type="hasOne" toEntity="File" required="false" />
+        <Relation name="HeaderImage" type="hasOne" toEntity="File" required="false" />
+    </Entity>
+
+    <Entity name="MemberType" description="{Name}">
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Property name="Description" required="true" storageType="MBString"/>
+        <Relation name="Privileges" toEntity="Privilege" type="hasMany"/>
+    </Entity>
+
+    <Entity name="Member" description="{DisplayName}">
+        <Property name="Login" storageType="VARCHAR(128)" required="true"/>
+        <Property name="DisplayName" storageType="VARCHAR(128)" required="false"/>
+        <Relation name="PrimaryEmail" toEntity="EmailAddress" required="true" type="hasOne"/>
+        <Relation name="Person" required="false" toEntity="Person" type="hasOne"/>
+        <Relation name="Type" required="true" toEntity="MemberType" type="hasOne"/>
+
+        <!--- Business(Member.Privileges) should be the sum of privileges via Data(Member.Type.Privileges) and Data(Member.Privileges) -->
+        <Relation name="Privileges" toEntity="Privilege" type="hasMany"/>
+        <Relation name="EmailAddresses" toEntity="EmailAddress" required="true" type="hasMany"/>
+        <Relation name="Notes" toEntity="Note" required="false" type="hasMany"/>
+    </Entity>
+
+    <Entity name="MemberGroup" description="{Name}">
+        <Property name="Name" required="true" indexed="true" storageType="VARCHAR(64)"/>
+        <Relation name="Members" toEntity="Member" type="hasMany" required="true"/>
+        <Relation name="Notes" toEntity="Note" required="false" type="hasMany"/>
+        <Relation name="Files" toEntity="File" required="false" type="hasMany"/>
+    </Entity>
+
+
+    <!-- notes are personal to their authors -->
+    <Entity name="Note" description="By {Author.Name} @ {Created}">
+        <Property name="Content" required="true" storageType="MBString"/>
+        <Relation name="Author" required="true" type="hasOne" toEntity="Member"/>
+    </Entity>
+
+    <!-- comments are "public" to the groups their authors are in -->
+    <Entity name="Comment" description="{Subject}">
+        <Property name="Subject" storageType="VARCHAR(196)" required="true" />
+        <Property name="Text" storageType="MBString" required="true" />
+        <Relation name="Files" toEntity="File" type="hasMany" />
+        <Relation name="Author" toEntity="Member" type="hasOne" required="true" />
+        <Relation name="Replies" toEntity="Comment" type="hasMany" required="false" />
+        <Relation name="VisibleTo" toEntity="MemberGroup" type="hasMany" required="false" />
+    </Entity>
+
+    <!-- Messages are internal private messages from member to member -->
+    <Entity name="Message" description="{From}: {Message}">
+        <Property name="When" required="true" storageType="DateTime" />
+        <Property name="Message" required="true" storageType="Text"/>
+        <Relation name="From" required="true" type="hasOne" toEntity="Member"/>
+        <Relation name="To" required="true" type="hasOne" toEntity="Member"/>
+    </Entity>
+
+    <Entity name="Password" description="********">
+        <Property name="Hash" required="true" storageType="MBString"/>
+        <Property name="ValidFrom" required="true" storageType="DateTime"/>
+        <Relation name="Member" toEntity="Member" type="hasOne" required="true"/>
+    </Entity>
+
+    <Entity name="Privilege" description="{Name}">
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Property name="Description" required="true" storageType="MBString"/>
+        <Relation name="Notes" toEntity="Note" required="false" type="hasMany"/>
+    </Entity>
+
+    <Entity name="File" description="{Name} ({ContentType})">
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Property name="Description" required="true" storageType="MBString"/>
+        <Property name="ContentType" required="true" storageType="MBString"/>
+
+        <Relation name="UploadedBy" toEntity="Member" type="hasOne" required="true"/>
+        <Relation name="VisibleToMembers" toEntity="Member" type="hasMany" />
+        <Relation name="VisibleToGroups" toEntity="MemberGroup" type="hasMany" />
+        <Relation name="Notes" toEntity="Note" required="false" type="hasMany"/>
+    </Entity>
+
+    <Entity name="Address" description="{StreetLine1} {PostalCode} {City}">
+        <Property name="StreetLine1" required="true" storageType="MBString"/>
+        <Property name="StreetLine2" required="false" storageType="MBString"/>
+        <Property name="StreetLine3" required="false" storageType="MBString"/>
+        <Property name="PostalCode" required="false" storageType="MBString"/>
+        <Property name="State" required="false" storageType="MBString"/>
+        <Property name="Region" required="false" storageType="MBString"/>
+        <Relation name="City" type="hasOne" required="false" toEntity="City"/>
+        <Property name="Latitude" required="false" storageType="float" />
+        <Property name="Longitude" required="false" storageType="float"/>
+        <Relation name="Notes" toEntity="Note" required="false" type="hasMany"/>
+    </Entity>
+
+    <Entity name="EmailAddress" description="{Value}">
+        <Property name="Value" required="true" storageType="VARCHAR(255)" phpType="string" validate="/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}/" />
+        <Relation name="Owner" required="false" type="hasOne" toEntity="Person"/>
+        <Relation name="Notes" toEntity="Note" required="false" type="hasMany"/>
+    </Entity>
+
+    <Entity name="PhoneNumber" description="{Value}">
+        <Property name="Value" required="true" storageType="MBString" phpType="string"/>
+        <Relation name="Type" type="hasOne" required="true" toEntity="PhoneNumberType"/>
+        <Relation name="Notes" toEntity="Note" required="false" type="hasMany"/>
+    </Entity>
+
+    <Entity name="PhoneNumberType" description="{Name}">
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Property name="Description" required="true" storageType="MBString"/>
+    </Entity>
+
+    <Entity name="Country" description="{Name}">
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Property name="IsoCode" required="false" storageType="MBString"/>
+        <Relation name="Cities" type="hasMany" toEntity="City"/>
+        <Relation name="Comments" toEntity="Comment" required="false" type="hasMany" />
+        <Relation name="Tags" toEntity="Tag" required="false" type="hasMany" />
+    </Entity>
+
+    <Entity name="City" description="{Name}">
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Relation name="Country" type="hasOne" toEntity="Country"/>
+        <Relation name="Comments" toEntity="Comment" required="false" type="hasMany" />
+        <Relation name="Tags" toEntity="Tag" required="false" type="hasMany" />
+    </Entity>
+
+    <Entity name="Page">
+        <Property indexed="true" name="Title" storageType="VARCHAR(64)" required="true"/>
+        <Property indexed="true" name="Slug" storageType="VARCHAR(32)" required="true"/>
+        <Property indexed="true" name="SortHint" storageType="Integer" required="false"/>
+
+        <Property name="Template" required="true" storageType="MBString"/>
+        <Property name="Implementation" required="false" storageType="MBString"/>
+
+        <Relation toEntity="Privilege" required="false" name="RequiredPrivilege" type="hasOne"/>
+        <Relation toEntity="Page" required="false" name="Parent" type="hasOne"/>
+
+        <Relation toEntity="Comment" required="false" name="Comments" type="hasMany"/>
+        <Relation toEntity="Tag" required="false" name="Tags" type="hasMany"/>
+
+        <Index unique="true" name="ux_Page_ParentAndSlug">
+            <Field name="_Parent"/>
+            <Field name="Slug"/>
+        </Index>
+    </Entity>
+
+    <Entity name="EmailMessageStatus">
+        <Property name="Name" storageType="VARCHAR(64)" required="true"/>
+        <Property name="Description" storageType="MBString" required="true"/>
+    </Entity>
+
+    <Entity name="EmailMessagePurpose">
+        <Property name="Name" storageType="VARCHAR(64)" required="true"/>
+        <Property name="Description" storageType="MBString" required="true"/>
+    </Entity>
+
+    <Entity name="EmailMessageQueue">
+        <Property name="SendAfter" storageType="DateTime" required="true"/>
+        <Relation name="Message" toEntity="EmailMessage" type="hasOne" required="true"/>
+        <Relation name="Status" toEntity="EmailMessageStatus" type="hasOne" required="true"/>
+    </Entity>
+
+    <Entity name="EmailMessageLog">
+        <Property name="DateSent" storageType="DateTime" required="true"/>
+        <Relation name="Message" toEntity="EmailMessage" type="hasOne" required="true" />
+        <Relation name="Status" toEntity="EmailMessageStatus" type="hasOne" required="true"/>
+    </Entity>
+
+    <Entity name="EmailMessage">
+        <Property name="Subject" storageType="VARCHAR(128)" required="true"/>
+        <Property name="Content" storageType="MBString" required="true"/>
+        <Relation name="Template" toEntity="EmailMessageTemplate" type="hasOne" />
+        
+        <Relation name="From" toEntity="EmailAddress" required="true" type="hasOne"/>
+        <Relation name="To" toEntity="EmailAddress" required="true" type="hasMany"/>
+        <Relation name="Cc" toEntity="EmailAddress" required="true" type="hasMany"/>
+        <Relation name="Bcc" toEntity="EmailAddress" required="true" type="hasMany"/>
+    </Entity>
+
+    <Entity name="EmailMessageTemplate">
+        <Property name="Name" storageType="VARCHAR(128)" required="true"/>
+        <Relation name="Purpose" toEntity="EmailMessagePurpose" type="hasOne"/>
+        <Property name="Subject" storageType="VARCHAR(128)" required="true"/>
+        <Property name="Content" storageType="MBString" required="true"/>
+        <Relation name="Tags" toEntity="Tag" required="false" type="hasMany" />
+    </Entity>
+
+    <Entity name="Tag">
+        <!-- Tags are meant to categorize "things" -->
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Relation name="Group" toEntity="TagGroup" type="hasOne"/>
+
+        <Relation name="TaggedPages" toEntity="Page" type="hasMany"/>
+    </Entity>
+
+    <Entity name="TagGroup">
+        <!-- Administrative grouping of tags -->
+        <Property name="Name" required="true" storageType="MBString"/>
+        <Property name="Description" required="false" storageType="MBString" />
+        <Relation name="Tags" required="false" toEntity="Tag" type="hasMany" />
+    </Entity>
+
+    <Entity name="Forum">
+        <Property name="Name" storageType="MBString" required="true" />
+        <Property name="Title" storageType="MBString" required="true" />
+        <Relation name="Moderators" toEntity="Member" type="hasMany" />
+        <Relation name="Comments" toEntity="Comment" required="false" type="hasMany" />
+        <Relation name="Tags" toEntity="Tag" required="false" type="hasMany" />
+    </Entity>
+
+    <Entity name="ForumPost">
+        <Property name="Body" storageType="MBString" required="true" />
+        <Relation name="Poster" toEntity="Member" required="true" />
+        <Relation name="Forum" toEntity="Forum" required="true" type="hasOne" />
+        <Relation name="ReplyTo" toEntity="Forum" required="false" type="hasOne" />
+        <Relation name="Files" toEntity="File" required="false" type="hasMany" />
+    </Entity>
+
+</Entities>
+

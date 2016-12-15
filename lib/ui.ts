@@ -4,7 +4,7 @@
 module red {
     export var settings = {
         debug: true,
-        displayRectInfo: true
+        displayRectInfo: false
     };
 
     export function typeId(anObject:Object):string {
@@ -172,6 +172,10 @@ module red {
             return new Point(this.origin.x + (this.size.width / 2), this.origin.y + (this.size.height / 2));
         }
 
+        public centeredInRect(r:Rect) {
+
+        }
+
         public shrink(pixels:number):Rect {
             return RectMake(
                 this.origin.x + pixels,
@@ -247,6 +251,14 @@ module red {
             this.origin = origin;
             this.size = size;
         }
+    }
+
+    export function DetermineTextSize(text:string, font:string) : Size {
+        let canvas = DetermineTextSize.canvas || (DetermineTextSize.canvas = document.createElement("canvas"));
+        let context = canvas.getContext("2d");
+        context.font = font;
+        let metrics = context.measureText(text);
+        return SizeMake(metrics.width, metrics.height);
     }
 
     export function PointMake(x, y):Point {
@@ -422,7 +434,9 @@ module red {
 
         public removeCssClass(aClass:string) {
             if (!this.hasCssClass(aClass)) {
+                console.log('before removeClass:', this.cssCasses);
                 this._cssClasses.splice(this._cssClasses.indexOf(aClass));
+                console.log('after removeClass:', this.cssCasses);
             }
         }
 
@@ -741,7 +755,10 @@ module red {
 
         constructor(frame:Rect) {
             super(frame);
-            this._identifier = typeId(this) + (viewId++).toString();
+
+            let typeName = typeId(this);
+            this._identifier = '_' + (viewId++).toString();
+            this.addCssClass(typeName);
             this.element.setAttribute('id', this._identifier);
             this._isBeingDragged = false;
             this._isResizing = false;
@@ -1746,7 +1763,6 @@ module red {
         constructor(aRect:Rect) {
             super(aRect);
             this.addCssClass('SplitViewSplitBar');
-            this.applyFrame();
         }
     }
 
@@ -1855,6 +1871,7 @@ module red {
             }
             return this._splitterPosition;
         }
+
         public set splitterPosition(value:number) {
             if (value < 0) value = 0;
             if (value > this.frame.size.width) value = this.frame.size.width;
@@ -1863,6 +1880,23 @@ module red {
                 this._splitterPosition = value;
                 this.applyFrame();
             }
+        }
+
+        public get splitterPositionPercentage():number {
+            let position = this.splitterPosition;
+            let available = (this.orientation == SplitViewOrientation.Horizontal)
+                ? this.frame.size.width
+                : this.frame.size.height;
+
+            return (100 / available) * position;
+        }
+
+        public set splitterPositionPercentage(v:number) {
+            let available = (this.orientation == SplitViewOrientation.Horizontal)
+                ? this.frame.size.width
+                : this.frame.size.height;
+
+            this.splitterPosition = (available / 100) * v;
         }
 
         private _splitterView:SplitViewSplitBar;
@@ -1892,12 +1926,13 @@ module red {
         constructor(aRect:Rect) {
             super(aRect);
             this.autoresizesSubviews = true;
-            this.contentView1 = new View(RectMakeZero());
-            this.contentView2 = new View(RectMakeZero());
+            this.contentView1 = new ContentView(RectMakeZero());
+            this.contentView2 = new ContentView(RectMakeZero());
 
             this.splitterView = new SplitViewSplitBar(RectMakeZero());
             this.splitterView.setBackgroundColor(colors.lightGray);
 
+            this.addCssClass('SplitView');
             this.splitterView.mouseDown = (e:MouseEvent) => {
                 if (!this.isBeingResized) {
                     new SplitViewAdjustManager(e, this);
@@ -1910,8 +1945,8 @@ module red {
             this.addSubview(this.contentView2);
             this.addSubview(this.splitterView);
 
-            this.contentView1.setBackgroundColor(red.colors.red);
-            this.contentView2.setBackgroundColor(red.colors.green);
+            // this.contentView1.setBackgroundColor(red.colors.red);
+            // this.contentView2.setBackgroundColor(red.colors.green);
 
             this.init();
             this.splitterView.clipsContent = false;
@@ -2046,6 +2081,11 @@ module red {
             });
         }
 
+        public didUpdateFrame(oldFrame:Rect, newFrame:Rect):void {
+            window.dispatchEvent(new Event('resize')); // force ace to update
+        }
+
+
         public onStringValueDidChange(e:any) {
             // console.log('onStringValueDidChange', e, this.stringValue);
 
@@ -2065,6 +2105,60 @@ module red {
             this._ace.style.width = this.frame.size.width + 'px';
 
             super.applyFrame();
+        }
+    }
+
+
+
+    export class TabContainer extends View
+    {
+        private _tabs : Array<Tab> = [];
+        public get tabs() : Array<Tab> { return this._tabs; }
+
+        private _buttonBar : TabButtonBar;
+
+        constructor(r:Rect) {
+            super(r);
+            this._buttonBar = new TabButtonBar(RectMakeZero(SizeMake(r.size.width, 24)));
+            this._buttonBar.setBackgroundColor(colors.green);
+
+            this.applyFrame();
+        }
+
+        public applyFrame() : void {
+            this._buttonBar.frame = RectMakeZero(SizeMake(this.frame.size.width, 24));
+
+            super.applyFrame();
+        }
+    }
+
+    export class TabButtonBar extends View
+    {
+        private _tabs : Array<Tab> = [];
+        public get tabs() : Array<Tab> { return this._tabs; }
+
+        public applyFrame() : void
+        {
+
+
+            super.applyFrame();
+        }
+    }
+
+
+    export class Tab
+    {
+        private _label : string;
+        public get label() : string { return this._label; }
+        public set label(v:string) : void { this._label = v; }
+
+        private _contentView : View;
+        public get contentView() : View { return this._contentView; }
+        public set contentView(v:View) : void { this._contentView = v; }
+
+        constructor(lbl: string, cntView:View) {
+            this.label = label;
+            this.contentView = cntView;
         }
     }
 

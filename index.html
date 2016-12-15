@@ -5,6 +5,7 @@
 		<script src="lib/ace/src-min-noconflict/ace.js" type="text/javascript"></script>
 		<script src="lib/ui.js" type="text/javascript"></script>
 		<script src="lib/tests.js" type="text/javascript"></script>
+		<script src="lib/ajax.js" type="text/javascript"></script>
 		<link rel="stylesheet" type="text/css" href="less/ui.css">
 	</head>
 	<body>
@@ -27,11 +28,13 @@
                 return win;
 			};
 
+
+		    // this is not the way to do it, but it can be done...
 		    function makeTransformationWindow() {
 
 		        var win = red.WindowWithSize(red.SizeMake(408, 434));
 
-		        win.title = "Transformer"
+		        win.title = "Quick 'n Dirty mysql database scripter."
 				// makes the contentView 400x400
 
                 var vSplitter = new red.VerticalSplitView(red.RectMake(0,0,400,400));
@@ -55,11 +58,29 @@
                 xslEditor.mode = "ace/mode/xml";
 //
                 var resultEditor = new red.TextEditor(red.RectMakeZero(vSplitter.contentView2.frame.size));
-				vSplitter.contentView2.addSubview(resultEditor);
+                resultEditor.mode = "ace/mode/sql";
+                vSplitter.contentView2.addSubview(resultEditor);
 //				win.applyFrame();
 
-				win.frame = red.RectInset(red.application.desktop.frame, 32);
-				hSplitter.splitterPosition = (win.frame.size.width / 2) - (hSplitter.splitterSize / 2);
+				win.frame = red.RectInset(red.application.desktop.frame, 16);
+				hSplitter.splitterPositionPercentage = 75; // = (win.frame.size.width / 2) - (hSplitter.splitterSize / 2);
+
+
+				ajax.Request.get('./data.xml',
+					function(x) {
+				    	xmlEditor.stringValue = x.responseText;
+					},
+					function(x) {
+				    	console.error(x);
+					});
+
+                ajax.Request.get('./transform.xsl',
+					function(x) {
+                        xslEditor.stringValue = x.responseText;
+                    },
+                    function(x) {
+                        console.error(x);
+                    });
 
                 win.center();
 
@@ -107,12 +128,7 @@
 
 			red.application.delegate = {
 				applicationDidFinishLaunching: function() {
-					red.application.desktop.setBackgroundImage('img/mountains.jpg');
-
-//                    red.application.desktop.addSubview(makeAceWindow('ace/mode/sql'));
-//                    red.application.desktop.addSubview(makeAceWindow('ace/mode/xml'));
-//                    red.application.desktop.addSubview(makeAceWindow('ace/mode/javascript'));
-
+//					red.application.desktop.setBackgroundImage('img/mountains.jpg');
                     red.application.desktop.addSubview(makeTransformationWindow());
 				}
 			};
