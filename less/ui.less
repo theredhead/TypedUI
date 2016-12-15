@@ -33,15 +33,29 @@ div {
 
 .PushButton {
   box-sizing: border-box;
-  border-radius: 1em;
+  border-radius: 8px;
   line-height: 20px;
   background: lightgray;
-  color: black;
+  color: rgb(32, 32, 32);
   text-shadow: 0 0 2px white;
   box-shadow: inset 1px 1px 3px white, inset -1px -1px 3px darkgray;
   border: solid 1px gray;
   text-align: center;
   vertical-align: middle;
+
+  font-family: 'Lucida Bright', sans-serif;
+  font-size: 14px;
+
+  &:before {
+    content: '';
+    border-radius: 8px;
+    box-shadow: inset 2px 2px 4px darken(white, 10%);
+    display: block;
+    background: white;
+    top: 1px;
+    height: 10px;
+    opacity: .5;
+  }
 
   &:hover {
     background: lightgray;
@@ -95,10 +109,10 @@ div {
   }
   // the active window
   &:last-child {
-    opacity: 1;
+    opacity: 1.0;
     box-shadow: 0 8px 32px rgba(0, 0, 0, .66);
     .ContentView {
-      opacity: 1;
+      opacity: 1.0;
     }
 
     .TitleBar {
